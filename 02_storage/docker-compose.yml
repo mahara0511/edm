@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  postgres_lakehouse:
+    image: postgres:16
+    container_name: lakehouse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dw_edm
+      POSTGRES_USER: edm_user
+      POSTGRES_PASSWORD: edm_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init_db:/docker-entrypoint-initdb.d:ro
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edm_user -d dw_edm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:4
+    container_name: lakehouse-adminer
+    restart: unless-stopped
+    depends_on:
+      postgres_lakehouse:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres_lakehouse
+    ports:
+      - "8082:8080"
+
+  minio:
+    image: minio/minio:latest
+    container_name: lakehouse-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  pg_data:
+  minio_data:

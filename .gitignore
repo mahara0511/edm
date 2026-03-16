@@ -1,0 +1,22 @@
+# Environments
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Excel / Data files (Mở comment nếu không muốn push dữ liệu thô dạng *.xlsx, hiện tại cứ để lỡ project cần)
+# *.xlsx
+
+# Docker volumes
+pg_data/
+minio_data/
+metabase_data/
+02_storage/pg_data/
+02_storage/minio_data/
+04_serving/metabase_data/
+postgres_data/
+
+# OS specific
+.DS_Store
+Thumbs.db
