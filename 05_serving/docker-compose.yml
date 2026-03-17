@@ -43,7 +43,18 @@ services:
       - ./api:/app
     working_dir: /app
     command: >
-      sh -c "pip install fastapi uvicorn pydantic && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "pip install fastapi uvicorn pydantic joblib pandas numpy scikit-learn sqlalchemy psycopg2-binary && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+  streamlit:
+    image: python:3.10-slim
+    container_name: lakehouse-streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install streamlit pandas sqlalchemy psycopg2-binary requests && streamlit run app.py --server.address 0.0.0.0"
 
 volumes:
   metabase_data:

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lakehouse AI Streaming Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --surface: rgba(255, 255, 255, 0.05);
+            --surface-hover: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --accent: #ff0844;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(79, 172, 254, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 8, 68, 0.1), transparent 25%);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -1px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        /* Architecture Pipeline */
+        .pipeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4rem;
+            position: relative;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .pipeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            z-index: -1;
+        }
+
+        .node {
+            background: rgba(20, 25, 40, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            width: 200px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.2);
+        }
+
+        .node .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .node h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .node p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Demo Section */
+        .demo-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .card h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+            background: rgba(0,0,0,0.4);
+        }
+
+        button {
+            width: 100%;
+            padding: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: scale(0.5);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 242, 254, 0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:hover::after {
+            opacity: 1;
+            transform: scale(1);
+            transition: transform 0.5s ease-out, opacity 0.3s;
+        }
+
+        /* Result Area */
+        .result-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 300px;
+            text-align: center;
+            border-radius: 16px;
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed rgba(255,255,255,0.1);
+            transition: all 0.5s ease;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+            transition: all 0.5s ease;
+        }
+
+        .result-status {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .result-log {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 80%;
+            word-break: break-all;
+            display: none;
+        }
+
+        /* Fraud States */
+        .is-fraud {
+            background: rgba(255, 8, 68, 0.05);
+            border-color: rgba(255, 8, 68, 0.3);
+            box-shadow: inset 0 0 50px rgba(255, 8, 68, 0.1);
+        }
+        .is-fraud .result-icon { opacity: 1; color: var(--accent); transform: scale(1.2); }
+        .is-fraud .result-score { color: var(--accent); }
+
+        .is-safe {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: inset 0 0 50px rgba(16, 185, 129, 0.1);
+        }
+        .is-safe .result-icon { opacity: 1; color: var(--success); transform: scale(1.2); }
+        .is-safe .result-score { color: var(--success); }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 242, 254, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0); }
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 10px; height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 900px) {
+            .demo-section { grid-template-columns: 1fr; }
+            .pipeline::before { display: none; }
+            .pipeline { flex-direction: column; align-items: stretch; gap: 1rem; }
+            .node { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+                <span class="live-indicator"></span>
+                <span style="color: var(--success); font-weight: 600; letter-spacing: 2px;">LIVE SYSTEM ACTIVE</span>
+            </div>
+            <h1>Lakehouse Architecture Flow</h1>
+            <p>End-to-End Real-time Data Platform & Machine Learning Inference</p>
+        </header>
+
+        <div class="pipeline">
+            <div class="node" style="animation: fadeInDown 0.6s 0.1s both;">
+                <div class="icon">📱</div>
+                <h3>1. Source</h3>
+                <p>Fake Events Generator</p>
+            </div>
+            <div class="node" style="animation: fadeInDown 0.6s 0.2s both;">
+                <div class="icon">🚀</div>
+                <h3>2. Ingestion</h3>
+                <p>Kafka Streaming Event Bus</p>
+            </div>
+            <div class="node" style="animation: fadeInDown 0.6s 0.3s both;">
+                <div class="icon">⚡</div>
+                <h3>3. Processing</h3>
+                <p>Spark Structured Streaming</p>
+            </div>
+            <div class="node" style="animation: fadeInDown 0.6s 0.4s both;">
+                <div class="icon">🗄️</div>
+                <h3>4. Storage</h3>
+                <p>MinIO Lake & Postgres DW</p>
+            </div>
+            <div class="node" style="animation: fadeInDown 0.6s 0.5s both; border-color: rgba(255,8,68,0.5);">
+                <div class="icon">🧠</div>
+                <h3>5. AI Serving</h3>
+                <p>FastAPI Fraud Model</p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <div class="card" style="animation: fadeInDown 0.8s 0.6s both;">
+                <h2>Test Neural Network</h2>
+                <form id="fraudForm">
+                    <div class="form-group">
+                        <label>Account ID</label>
+                        <input type="number" id="account_id" value="404" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Transaction Type</label>
+                        <select id="txn_type">
+                            <option value="PAYMENT">Payment (Store/Online)</option>
+                            <option value="TRANSFER">Bank Transfer</option>
+                            <option value="TOP_UP">E-Wallet Top-up</option>
+                            <option value="WITHDRAWAL">Cash Withdrawal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" id="amount" value="5000" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Merchant / Note</label>
+                        <input type="text" id="merchant" value="UNKNOWN_VENDOR" required>
+                    </div>
+                    <button type="submit" id="submitBtn">Analyze Transaction</button>
+                </form>
+            </div>
+
+            <div class="card" style="animation: fadeInDown 0.8s 0.7s both;">
+                <h2 style="margin-bottom: 0;">AI Inference Result</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Powered by Random Forest</p>
+                
+                <div class="result-area" id="resultBox">
+                    <div class="result-icon" id="resIcon">🤖</div>
+                    <div class="result-status" id="resStatus">Awaiting Data...</div>
+                    <div class="result-score" id="resScore">--%</div>
+                    <div class="result-log" id="resLog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fraudForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const resultBox = document.getElementById('resultBox');
+            const resIcon = document.getElementById('resIcon');
+            const resStatus = document.getElementById('resStatus');
+            const resScore = document.getElementById('resScore');
+            const resLog = document.getElementById('resLog');
+
+            // Get values
+            const payload = {
+                account_id: parseInt(document.getElementById('account_id').value),
+                amount: parseFloat(document.getElementById('amount').value),
+                txn_type: document.getElementById('txn_type').value,
+                merchant: document.getElementById('merchant').value
+            };
+
+            // Loading state
+            btn.innerHTML = 'Analyzing... <span class="live-indicator" style="margin-left:8px; margin-right:0;"></span>';
+            btn.style.opacity = '0.7';
+            resultBox.className = 'result-area';
+            resIcon.innerHTML = '⏳';
+            resStatus.innerText = 'Running Inference...';
+            resScore.innerText = '--';
+            resLog.style.display = 'none';
+
+            try {
+                // Fetch to FastAPI /predict_fraud
+                const response = await fetch('/predict_fraud', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error("API Server Error");
+                
+                const data = await response.json();
+                const scorePct = (data.risk_score * 100).toFixed(1);
+                
+                // Animate numbers
+                resScore.innerText = `${scorePct}%`;
+                resLog.style.display = 'block';
+                resLog.innerText = JSON.stringify(data, null, 2);
+
+                if (data.is_fraud) {
+                    resultBox.className = 'result-area is-fraud';
+                    resIcon.innerHTML = '🚨';
+                    resStatus.innerText = 'HIGH RISK DECTECTED (FRAUD)';
+                } else {
+                    resultBox.className = 'result-area is-safe';
+                    resIcon.innerHTML = '✅';
+                    resStatus.innerText = 'TRANSACTION SAFE';
+                }
+
+            } catch (error) {
+                resultBox.className = 'result-area';
+                resIcon.innerHTML = '❌';
+                resStatus.innerText = 'Connection Failed';
+                resScore.innerText = 'ERR';
+                console.error(error);
+            } finally {
+                btn.innerHTML = 'Analyze Transaction';
+                btn.style.opacity = '1';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -7,37 +7,38 @@ from sklearn.model_selection import train_test_split
 MODEL_PATH = "fraud_model.pkl"
 
 def train_basic_model():
-    """Huấn luyện một mô hình Machine Learning phát hiện giao dịch gian lận đơn giản"""
-    print(">>> Bắt đầu tạo dữ liệu huấn luyện giả lập để học...")
-    # Tạo 1000 dòng dữ liệu giả lập để làm ví dụ
-    import numpy as np
+    """Huấn luyện mô hình từ dữ liệu THẬT trong PostgreSQL"""
+    print(">>> Bắt đầu nạp dữ liệu từ Database để học...")
     
-    np.random.seed(42)
-    n_samples = 1000
-    
-    # Giả định:
-    # 0 = PAYMENT/TRANSFER, 1 = WITHDRAWAL, 2 = TOP_UP
-    txn_types = np.random.choice([0, 1, 2], size=n_samples, p=[0.7, 0.2, 0.1])
-    amounts = np.random.exponential(scale=500, size=n_samples) # Đa số khoản tiền nhỏ
-    
-    # Quy tắc tạo Label Gian lận (Is Fraud):
-    # - Nếu số tiền quá lớn (> 3000) HOẶC (rút tiền + số tiền > 1000), tỷ lệ gian lận cao
-    is_fraud = np.zeros(n_samples)
-    for i in range(n_samples):
-        prob = 0.01  # Tỷ lệ gian lận nền
-        if amounts[i] > 3000:
-            prob += 0.8
-        if txn_types[i] == 1 and amounts[i] > 1000: 
-            prob += 0.5
-            
-        is_fraud[i] = np.random.binomial(1, min(prob, 1.0))
+    # Kết nối Database Warehouse để lấy data giao dịch
+    try:
+        from sqlalchemy import create_engine
+        engine = create_engine("postgresql://edm_user:edm_pass@host.docker.internal:5433/dw_edm")
+        
+        # Đọc dữ liệu từ bảng ví điện tử có sẵn (ewallet.transaction)
+        # Bảng này ta xem như những giao dịch có status FAILED là Fraud (bị chặn) để làm nhãn Học
+        query = """
+            SELECT txn_type, txn_amount AS amount, 
+                   CASE WHEN txn_status = 'FAILED' THEN 1 ELSE 0 END AS is_fraud 
+            FROM ewallet.transaction
+        """
+        df = pd.read_sql(query, engine)
+        print(f">>> Đã lấy được {len(df)} dòng dữ liệu giao dịch thật từ Database!")
+        
+        if len(df) < 50:
+            print(">>> Dữ liệu trong Database có vẻ hơi ít để nặn ra AI thông minh. Nhưng vẫn sẽ tiến hành train...")
 
-    # Tạo DataFrame Pandas
-    df = pd.DataFrame({
-        'txn_type': txn_types,
-        'amount': amounts,
-        'is_fraud': is_fraud
-    })
+    except Exception as e:
+        print(f"LỖI KẾT NỐI DB: {e}. Đảm bảo cụm Postgres đã bật!")
+        return
+
+    # Chuẩn hoá dữ liệu chữ (Label Encoding) để máy tính hiểu
+    # VD: PAYMENT -> 0, WITHDRAWAL -> 1
+    type_map = {
+        "PAYMENT": 0, "TRANSFER": 0,
+        "WITHDRAWAL": 1, "TOP_UP": 2
+    }
+    df['txn_type'] = df['txn_type'].map(type_map).fillna(0)
     
     X = df[['txn_type', 'amount']]
     y = df['is_fraud']

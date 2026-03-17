@@ -1,10 +1,19 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import joblib
 import pandas as pd
 import os
 
 app = FastAPI(title="Lakehouse Model Serving API")
+
+# Mount static files folder
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
 
 # Cố gắng load mô hình Random Forest thật nếu file tồn tại
 MODEL_PATH = "fraud_model.pkl"
