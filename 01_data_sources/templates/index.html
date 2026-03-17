@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Wallet Real-time Data Source</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .fraud {
+        background-color: #ffe6e6 !important;
+        color: #dc3545;
+        font-weight: 500;
+      }
+      .table {
+        font-size: 0.95rem;
+      }
+      .blinking {
+        animation: blinker 1.5s linear infinite;
+      }
+      @keyframes blinker {
+        50% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="row align-items-center mb-4">
+        <div class="col">
+          <h2 class="mb-1 text-primary">E-Wallet Transaction Generator</h2>
+          <p class="text-muted mb-0">
+            Mô phỏng Stream dữ liệu theo thời gian thực (Real-time). Đẩy trực
+            tiếp vào
+            <span class="badge bg-dark"
+              >Kafka Topic: realtime_transactions</span
+            >
+          </p>
+        </div>
+        <div class="col-auto">
+          <button
+            id="toggleBtn"
+            class="btn btn-success btn-lg px-4 shadow-sm"
+            onclick="toggleStream()"
+          >
+            Bắt đầu Stream
+          </button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 text-secondary">
+            Trạng thái kết nối:
+            <span id="pStatus" class="badge bg-secondary ms-1"
+              >Đang chờ...</span
+            >
+          </h6>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">Thời gian</th>
+                <th>Mã GD (Event ID)</th>
+                <th>Tài khoản ID</th>
+                <th>Loại Giao Dịch</th>
+                <th>Số Tiền</th>
+                <th>ĐV Chấp nhận (Merchant)</th>
+                <th class="text-center">Tình trạng Fraud</th>
+              </tr>
+            </thead>
+            <tbody id="eventTable">
+              <!-- Data rows ... -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let isRunning = false;
+
+      function toggleStream() {
+        fetch("/toggle", { method: "POST" })
+          .then((r) => r.json())
+          .then((data) => {
+            updateBtn(data.status === "running");
+          });
+      }
+
+      function updateBtn(running) {
+        isRunning = running;
+        const btn = document.getElementById("toggleBtn");
+        const status = document.getElementById("pStatus");
+        if (isRunning) {
+          btn.className = "btn btn-danger btn-lg px-4 shadow-sm";
+          btn.innerHTML = "Dừng Stream";
+          status.className = "badge bg-success ms-1 blinking";
+          status.innerHTML = "Đang Stream dữ liệu";
+        } else {
+          btn.className = "btn btn-success btn-lg px-4 shadow-sm";
+          btn.innerHTML = "Bắt đầu Stream";
+          status.className = "badge bg-secondary ms-1";
+          status.innerHTML = "Đã dừng";
+        }
+      }
+
+      function fetchEvents() {
+        fetch("/data")
+          .then((r) => r.json())
+          .then((data) => {
+            updateBtn(data.is_running);
+            let html = "";
+            if (data.events.length === 0) {
+              html =
+                '<tr><td colspan="7" class="text-center py-5 text-muted">Chưa có giao dịch nào... Hãy nhấn <b>Bắt đầu Stream</b>!</td></tr>';
+            } else {
+              data.events.forEach((e) => {
+                const fraudClass = e.is_fraud_flag === 1 ? "fraud" : "";
+                const fraudText =
+                  e.is_fraud_flag === 1 ? "Cảnh báo (Fraud)" : "Hợp lệ";
+
+                // Định dạng tiền
+                const amountFmt =
+                  parseFloat(e.amount).toLocaleString("en-US") +
+                  " " +
+                  e.currency;
+                const typeColor =
+                  e.txn_type === "PAYMENT"
+                    ? "text-primary"
+                    : e.txn_type === "TRANSFER"
+                      ? "text-info"
+                      : e.txn_type === "TOP_UP"
+                        ? "text-success"
+                        : "text-danger";
+
+                html += `<tr class="${fraudClass}">
+                                <td class="ps-4"><span class="text-muted">${e.time_short}</span></td>
+                                <td class="text-muted font-monospace">${e.event_id_short}</td>
+                                <td><strong>#${e.account_id}</strong></td>
+                                <td><span class="fw-bold ${typeColor}">${e.txn_type}</span></td>
+                                <td><strong class="text-success">${amountFmt}</strong></td>
+                                <td>${e.merchant}</td>
+                                <td class="text-center">${fraudText}</td>
+                            </tr>`;
+              });
+            }
+            document.getElementById("eventTable").innerHTML = html;
+          });
+      }
+
+      // Auto reload table every ~0.8s
+      setInterval(fetchEvents, 800);
+      fetchEvents();
+    </script>
+  </body>
+</html>

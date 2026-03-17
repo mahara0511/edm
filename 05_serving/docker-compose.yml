@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  metabase:
+    image: metabase/metabase:latest
+    container_name: lakehouse-metabase
+    ports:
+      - "3000:3000"
+    environment:
+      - MB_DB_TYPE=h2
+    volumes:
+      - metabase_data:/metabase-data
+
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: lakehouse-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=admin
+    volumes:
+      - ./notebooks:/home/jovyan/work
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: lakehouse-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command: start-dev
+    ports:
+      - "8081:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+  fastapi:
+    image: python:3.10-slim
+    container_name: lakehouse-fastapi
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install fastapi uvicorn pydantic && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  metabase_data:
+  keycloak_data:

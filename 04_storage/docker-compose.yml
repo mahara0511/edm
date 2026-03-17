@@ -4,6 +4,7 @@ services:
   postgres_lakehouse:
     image: postgres:16
     container_name: lakehouse-postgres
+    command: postgres -c wal_level=logical
     restart: unless-stopped
     environment:
       POSTGRES_DB: dw_edm

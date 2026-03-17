@@ -88,3 +88,17 @@ CREATE INDEX IF NOT EXISTS idx_card_account_user         ON card.card_account(us
 CREATE INDEX IF NOT EXISTS idx_card_account_branch       ON card.card_account(branch_code);
 CREATE INDEX IF NOT EXISTS idx_statement_card            ON card.statement(card_no);
 CREATE INDEX IF NOT EXISTS idx_statement_date            ON card.statement(statement_date);
+
+-- ==================== PUBLIC REALTIME ====================
+
+CREATE TABLE IF NOT EXISTS public.realtime_transactions (
+    id              SERIAL          PRIMARY KEY,
+    event_id        VARCHAR(100),
+    account_id      INT,
+    amount          NUMERIC(18,2),
+    txn_type        VARCHAR(30),
+    currency        VARCHAR(10),
+    timestamp       TIMESTAMP,
+    merchant        VARCHAR(255),
+    is_fraud_flag   INT
+);
