@@ -159,7 +159,7 @@ with DAG(
         postgres_conn_id='postgres_lakehouse',
         sql="""
             INSERT INTO dw.fact_enterprise_transaction (customer_sk, product_sk, source_system, source_trans_id, base_amount, currency_code, trans_timestamp, status)
-            SELECT dc.customer_sk, pa.product_sk, 'COREBANK', 'LND_' || ml.branch_code, ml.principal_amount, 'VND', ml.disbursement_date::TIMESTAMP, 'DISBURSED'
+            SELECT dc.customer_sk, pa.product_sk, 'COREBANK', 'LND_' || ml.branch_code, ml.principal_amount, 'USD', ml.disbursement_date::TIMESTAMP, 'DISBURSED'
             FROM corebank.mortgage_loan ml JOIN dw.dim_customer dc ON dc.bank_cif = ml.cif
             JOIN dw.dim_product_account pa ON pa.customer_sk = dc.customer_sk AND pa.product_type = 'LOAN_CONTRACT'
             WHERE ml.disbursement_date = '{{ ds }}';
