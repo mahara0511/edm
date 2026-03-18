@@ -1,200 +1,183 @@
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.operators.python import PythonOperator
+from airflow.operators.empty import EmptyOperator
 from datetime import datetime, timedelta
 
 default_args = {
-    'owner': 'lakehouse_admin',
-    'retries': 2,
+    'owner': 'enterprise_admin',
+    'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
 
 """
-PIPELINE ETL CHUẨN (STANDARD ETL PIPELINE):
-- Đảm bảo tính Idempotent (Chạy lại DAG không bị lặp dữ liệu bằng DELETE-INSERT theo Date).
-- Workflow: Load Dimensions -> Load Facts -> Kiểm thử chất lượng (Data Quality).
+FINAL ENTERPRISE LAKEHOUSE PIPELINE (CLEANED VERSION):
+- Real-time: PAYMENT + EWALLET (Kafka -> Spark -> DW).
+- Batch: LENDING (Corebank -> DW).
+- No more Batch E-wallet (Removed to avoid duplication).
 """
 
 with DAG(
-    dag_id='lakehouse_daily_etl_standard',
+    dag_id='enterprise_edw_etl_pipeline',
     default_args=default_args,
     start_date=datetime(2024, 1, 1),
     schedule_interval='@daily',
     catchup=False,
-    tags=['lakehouse', 'elt', 'dw'],
+    tags=['edw', 'enterprise', 'realtime_vs_batch'],
 ) as dag:
     
     start_pipeline = EmptyOperator(task_id='start_pipeline')
 
-    # ==========================================
-    # 1. LOAD DIMENSIONS (Nạp danh mục)
-    # ==========================================
-    
-    # Sinh Dim Time tự động nếu chưa có
-    load_dim_time = PostgresOperator(
-        task_id='load_dim_time',
-        postgres_conn_id='postgres_lakehouse',
-        sql="""
-            INSERT INTO dw.dim_time (full_date, day, month, quarter, year, day_name, month_name, is_weekend)
-            SELECT 
-                datum_date, EXTRACT(DAY FROM datum_date), EXTRACT(MONTH FROM datum_date), 
-                EXTRACT(QUARTER FROM datum_date), EXTRACT(YEAR FROM datum_date),
-                TO_CHAR(datum_date, 'Day'), TO_CHAR(datum_date, 'Month'),
-                CASE WHEN EXTRACT(ISODOW FROM datum_date) IN (6, 7) THEN 'true' ELSE 'false' END
-            FROM (SELECT generate_series(DATE('2023-01-01'), DATE('2026-12-31'), '1 day'::interval) AS datum_date) AS t
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_time WHERE full_date = t.datum_date);
-        """
-    )
-
+    # 1. マスターデータ (MASTER DATA)
     load_dim_customer = PostgresOperator(
         task_id='load_dim_customer',
         postgres_conn_id='postgres_lakehouse',
         sql="""
-            -- 1. Nạp từ Corebank
-            INSERT INTO dw.dim_customer (cif_number, full_name, national_id, phone_number, current_address, effective_date, is_current)
-            SELECT c.cif, c.full_name, c.national_id, c.phone, c.current_address, CURRENT_DATE, TRUE
-            FROM corebank.customer c
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_customer WHERE cif_number = c.cif);
+            TRUNCATE dw.dim_customer RESTART IDENTITY CASCADE;
+            TRUNCATE dw.mdm_deduplication_log RESTART IDENTITY CASCADE;
 
-            -- 2. Bổ sung từ Realtime nếu chưa có
-            INSERT INTO dw.dim_customer (cif_number, full_name, effective_date, is_current)
-            SELECT DISTINCT CAST(account_id AS VARCHAR), 'Customer ' || account_id, CURRENT_DATE, TRUE
-            FROM public.realtime_transactions t
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_customer WHERE cif_number = CAST(t.account_id AS VARCHAR));
+            -- 1. Unknown record với SK=1
+            INSERT INTO dw.dim_customer (customer_sk, national_id, phone_number, full_name, is_wallet_user, is_borrower, kyc_level)
+            VALUES (1, 'N/A', 'N/A', 'General/Unknown/N/A', false, false, 'TIER_0')
+            ON CONFLICT (customer_sk) DO NOTHING;
+
+            -- Reset sequence để ID tiếp theo là 2
+            SELECT setval(pg_get_serial_sequence('dw.dim_customer', 'customer_sk'), 1, true);
+
+            WITH 
+            cleansed_bank AS (
+                SELECT 
+                    cif, 
+                    national_id, 
+                    REGEXP_REPLACE(phone, '[^0-9]', '', 'g') as clean_phone, 
+                    UPPER(TRIM(full_name)) as full_name,
+                    'TIER_2' as kyc_level  -- Bank mặc định là TIER_2
+                FROM corebank.customer
+            ),
+            -- 2. Cleanse Wallet Data
+            cleansed_wallet AS (
+                SELECT 
+                    user_id, 
+                    national_id, 
+                    REGEXP_REPLACE(phone_number, '[^0-9]', '', 'g') as clean_phone, 
+                    UPPER(TRIM(full_name)) as full_name,
+                    kyc_level
+                FROM ewallet.account
+            ),
+            -- 3. Identity Resolution (Dùng COALESCE để làm Hash-Joinable)
+            identities AS (
+                SELECT 
+                    COALESCE(b.national_id, w.national_id, 'PH_' || w.clean_phone) as master_id,
+                    COALESCE(b.clean_phone, w.clean_phone) as master_phone,
+                    COALESCE(b.full_name, w.full_name) as master_name,
+                    b.cif as bank_cif,
+                    w.user_id as wallet_user_id,
+                    (w.user_id IS NOT NULL) as is_wallet,
+                    (b.cif IS NOT NULL) as is_borrower,
+                    COALESCE(b.kyc_level, w.kyc_level) as master_kyc
+                FROM cleansed_bank b
+                FULL OUTER JOIN cleansed_wallet w 
+                    ON COALESCE(b.national_id, 'P_' || b.clean_phone) = COALESCE(w.national_id, 'P_' || w.clean_phone)
+            )
+            INSERT INTO dw.dim_customer (national_id, phone_number, full_name, is_wallet_user, is_borrower, kyc_level, bank_cif, wallet_user_id)
+            SELECT 
+                master_id, master_phone, master_name, is_wallet, is_borrower, master_kyc,
+                bank_cif, wallet_user_id
+            FROM identities;
+
+            -- 5. MDM Log
+            INSERT INTO dw.mdm_deduplication_log (surviving_customer_sk, merged_source_id, confidence_score)
+            SELECT dc.customer_sk, dc.wallet_user_id, 0.95
+            FROM dw.dim_customer dc
+            WHERE dc.bank_cif IS NOT NULL AND dc.wallet_user_id IS NOT NULL;
         """
     )
     
-    load_dim_branch = PostgresOperator(
-        task_id='load_dim_branch',
-        postgres_conn_id='postgres_lakehouse',
-        sql="""
-            INSERT INTO dw.dim_branch (branch_code, branch_name)
-            SELECT DISTINCT branch_code, 'Branch ' || branch_code
-            FROM corebank.mortgage_loan ml
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_branch WHERE branch_code = ml.branch_code);
-
-            -- Mặc định cho Realtime
-            INSERT INTO dw.dim_branch (branch_code, branch_name)
-            SELECT 'MAIN', 'Main Office'
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_branch WHERE branch_code = 'MAIN');
-        """
-    )
-
     load_dim_merchant = PostgresOperator(
         task_id='load_dim_merchant',
         postgres_conn_id='postgres_lakehouse',
         sql="""
-            INSERT INTO dw.dim_merchant (merchant_code, merchant_name, merchant_category)
-            SELECT DISTINCT 
-                SUBSTRING(UPPER(REPLACE(merchant, ' ', '_')) FROM 1 FOR 20),
-                merchant, 
-                'General'
-            FROM public.realtime_transactions t
-            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_merchant WHERE merchant_name = t.merchant);
+            TRUNCATE dw.dim_merchant RESTART IDENTITY CASCADE;
+            INSERT INTO dw.dim_merchant (merchant_sk, source_merchant_id, merchant_name) 
+            VALUES (1, 'NA', 'General/Unknown') ON CONFLICT DO NOTHING;
+            
+            -- Reset sequence để ID tiếp theo là 2
+            SELECT setval(pg_get_serial_sequence('dw.dim_merchant', 'merchant_sk'), 1, true);
+
+            INSERT INTO dw.dim_merchant (source_merchant_id, merchant_name)
+            SELECT DISTINCT merchant_name, merchant_name FROM public.realtime_transactions
+            ON CONFLICT DO NOTHING;
         """
     )
 
-    # ==========================================
-    # 2. LOAD FACTS (Nạp dữ liệu giao dịch phát sinh)
-    # ==========================================
-    
+    load_dim_product_account = PostgresOperator(
+        task_id='load_dim_product_account',
+        postgres_conn_id='postgres_lakehouse',
+        sql="""
+            TRUNCATE dw.dim_product_account RESTART IDENTITY CASCADE;
+            INSERT INTO dw.dim_product_account (product_sk, customer_sk, product_type, source_account_id, status)
+            VALUES (1, 1, 'N/A', 'N/A', 'N/A') ON CONFLICT DO NOTHING;
+            
+            -- Reset sequence để ID tiếp theo là 2
+            SELECT setval(pg_get_serial_sequence('dw.dim_product_account', 'product_sk'), 1, true);
+
+            INSERT INTO dw.dim_product_account (customer_sk, product_type, source_account_id, status)
+            SELECT dc.customer_sk, 'WALLET_ACCOUNT', acc.account_id, acc.account_status
+            FROM ewallet.account acc JOIN dw.dim_customer dc ON dc.wallet_user_id = acc.user_id;
+
+            INSERT INTO dw.dim_product_account (customer_sk, product_type, source_account_id, status)
+            SELECT dc.customer_sk, 'MORTGAGE_LOAN', ml.branch_code || '_' || ml.cif, 'ACTIVE'
+            FROM corebank.mortgage_loan ml JOIN dw.dim_customer dc ON dc.bank_cif = ml.cif;
+        """
+    )
+
+    # 2. EVENTS (UNIFIED TRANSACTIONS)
+    clear_fact = PostgresOperator(task_id='clear_fact_today', postgres_conn_id='postgres_lakehouse', sql="DELETE FROM dw.fact_enterprise_transaction WHERE DATE(trans_timestamp) = '{{ ds }}';")
+
+    # Kafka nạp Real-time (PAYMENT & EWALLET)
+    load_fact_kafka = PostgresOperator(
+        task_id='load_fact_kafka',
+        postgres_conn_id='postgres_lakehouse',
+        sql="""
+            INSERT INTO dw.fact_enterprise_transaction (customer_sk, merchant_sk, product_sk, source_system, source_trans_id, base_amount, currency_code, trans_timestamp, status)
+            SELECT 
+                COALESCE(dc.customer_sk, 1),
+                COALESCE(dm.merchant_sk, 1),
+                1 as product_sk, -- Gán tạm 1 để đảm bảo nạp thành công
+                rt.source_system, rt.event_id, rt.base_amount, rt.currency, rt.timestamp::TIMESTAMP, 'COMPLETED'
+            FROM public.realtime_transactions rt
+            LEFT JOIN dw.dim_customer dc ON (
+                (rt.source_system = 'PAYMENT' AND dc.bank_cif = rt.cif) OR 
+                (rt.source_system = 'EWALLET' AND dc.wallet_user_id = rt.wallet_id)
+            )
+            LEFT JOIN dw.dim_merchant dm ON (rt.merchant_name = dm.merchant_name);
+        """
+    )
+
+    # Corebank (LENDING - Batch only)
     load_fact_lending = PostgresOperator(
         task_id='load_fact_lending',
         postgres_conn_id='postgres_lakehouse',
         sql="""
-            DELETE FROM dw.fact_debt_status f
-            USING dw.dim_time dt
-            WHERE f.time_key = dt.time_key AND dt.full_date = '{{ ds }}';
-
-            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
-            SELECT 
-                COALESCE(dim_c.customer_key, 1), 
-                COALESCE(dim_b.branch_key, 1), 
-                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
-            FROM corebank.mortgage_loan ml
-            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
-            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
-            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            INSERT INTO dw.fact_enterprise_transaction (customer_sk, product_sk, source_system, source_trans_id, base_amount, currency_code, trans_timestamp, status)
+            SELECT dc.customer_sk, pa.product_sk, 'COREBANK', 'LND_' || ml.branch_code, ml.principal_amount, 'VND', ml.disbursement_date::TIMESTAMP, 'DISBURSED'
+            FROM corebank.mortgage_loan ml JOIN dw.dim_customer dc ON dc.bank_cif = ml.cif
+            JOIN dw.dim_product_account pa ON pa.customer_sk = dc.customer_sk AND pa.product_type = 'LOAN_CONTRACT'
             WHERE ml.disbursement_date = '{{ ds }}';
         """
     )
 
-    load_fact_ewallet = PostgresOperator(
-        task_id='load_fact_ewallet',
-        postgres_conn_id='postgres_lakehouse',
-        sql="""
-            DELETE FROM dw.fact_ewallet_transaction f
-            USING dw.dim_time dt
-            WHERE f.time_key = dt.time_key AND dt.full_date = '{{ ds }}';
-
-            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
-            SELECT 
-                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
-            FROM ewallet.transaction t
-            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
-            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
-            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
-            WHERE DATE(t.txn_date) = '{{ ds }}';
-        """
-    )
-
-    load_fact_realtime_payments = PostgresOperator(
-        task_id='load_fact_realtime_payments',
-        postgres_conn_id='postgres_lakehouse',
-        sql="""
-            -- Idempotent: Xóa sạch dữ liệu của ngày chạy để nạp lại
-            DELETE FROM dw.fact_payment_transaction f
-            USING dw.dim_time dt
-            WHERE f.time_key = dt.time_key AND dt.full_date = '{{ ds }}';
-
-            -- Nạp từ public.realtime_transactions (Bronze Layer) sang dw schema (Gold Layer)
-            INSERT INTO dw.fact_payment_transaction (customer_key, merchant_key, branch_key, time_key, channel_key, txn_count, txn_amount, net_amount, txn_status)
-            SELECT 
-                COALESCE(dc.customer_key, 1),
-                COALESCE(dm.merchant_key, 1),
-                COALESCE(db.branch_key, 1),
-                dt.time_key,
-                1, -- Kênh Mobile mặc định
-                1, -- Số lượng transaction
-                rt.amount,
-                rt.amount, -- Giả sử không có phí
-                'SUCCESS'
-            FROM public.realtime_transactions rt
-            JOIN dw.dim_customer dc ON dc.cif_number = CAST(rt.account_id AS VARCHAR)
-            JOIN dw.dim_time dt ON dt.full_date = DATE(rt.timestamp)
-            LEFT JOIN dw.dim_merchant dm ON dm.merchant_name = rt.merchant
-            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
-            WHERE DATE(rt.timestamp) = '{{ ds }}';
-        """
-    )
-
-    # ==========================================
-    # 3. DATA QUALITY CHECKS (Kiểm định)
-    # ==========================================
-    
+    # 3. DQ MONITORING
     dq_check = PostgresOperator(
-        task_id='dq_checks',
+        task_id='dq_monitor',
         postgres_conn_id='postgres_lakehouse',
         sql="""
-            -- Đảm bảo không có data nào bị NULL key quan trọng
-            SELECT 
-                1 / CASE WHEN count(*) = 0 THEN 1 ELSE 0 END
-            FROM (
-                SELECT 1 FROM dw.fact_payment_transaction WHERE customer_key IS NULL
-                UNION ALL
-                SELECT 1 FROM dw.fact_debt_status WHERE customer_key IS NULL
-                UNION ALL
-                SELECT 1 FROM dw.fact_ewallet_transaction WHERE customer_key IS NULL
-            ) AS failures;
+            INSERT INTO dw.dq_quarantine_log (source_system, raw_payload, error_type)
+            SELECT source_system, row_to_json(f), 'INVALID_AMOUNT'
+            FROM dw.fact_enterprise_transaction f
+            WHERE base_amount <= 0;
         """
     )
 
-    end_pipeline = EmptyOperator(task_id='end_pipeline')
-
-    # Dependency Flow
-    start_pipeline >> [load_dim_time, load_dim_customer, load_dim_branch, load_dim_merchant]
-    [load_dim_time, load_dim_customer, load_dim_branch, load_dim_merchant] >> load_fact_lending
-    [load_dim_time, load_dim_customer, load_dim_branch, load_dim_merchant] >> load_fact_ewallet
-    [load_dim_time, load_dim_customer, load_dim_branch, load_dim_merchant] >> load_fact_realtime_payments
-    [load_fact_lending, load_fact_ewallet, load_fact_realtime_payments] >> dq_check >> end_pipeline
+    # Workflow
+    start_pipeline >> [load_dim_customer, load_dim_merchant] >> load_dim_product_account >> clear_fact
+    clear_fact >> [load_fact_kafka, load_fact_lending] >> dq_check

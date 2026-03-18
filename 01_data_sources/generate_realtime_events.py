@@ -1,48 +1,57 @@
 import json
-import time
 import random
-from uuid import uuid4
+import time
 from datetime import datetime
+from uuid import uuid4
 from faker import Faker
 from kafka import KafkaProducer
 
-# Cần cài thư viện: pip install kafka-python faker
-
 fake = Faker()
 
-def create_mock_transaction():
-    """Tạo dữ liệu giao dịch giả lập (E-Wallet/Banking) theo đúng mô tả"""
+def create_payment_transaction():
+    """Định dạng 1: Công ty Payment Gateway (PAYMENT) - Khớp 100% Định dạng CIF doanh nghiệp"""
     return {
+        "source_system": "PAYMENT",
         "event_id": str(uuid4()),
-        "account_id": random.randint(1, 1000),
-        "amount": round(random.uniform(10.0, 5000.0), 2),
-        "txn_type": random.choice(["PAYMENT", "TRANSFER", "TOP_UP", "WITHDRAWAL"]),
-        "currency": "VND",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "merchant": fake.company(),
-        "is_fraud_flag": random.choices([0, 1], weights=[0.98, 0.02])[0] # 2% tỷ lệ lừa đảo
+        "cif": f"CIF{random.randint(1, 1000):06d}", # 9 ký tự: CIF + 000XXX
+        "card_bin": "450630XXXX",
+        "merchant_name": fake.company(),
+        "base_amount": round(random.uniform(50.0, 5000.0), 2),
+        "currency": "USD",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+def create_wallet_transaction():
+    """Định dạng 2: Ứng dụng Ví điện tử (E-WALLET) - Khớp 100% Định dạng Wallet ID doanh nghiệp"""
+    return {
+        "source_system": "EWALLET",
+        "event_id": str(uuid4()),
+        "wallet_id": f"W{random.randint(500, 1500):06d}", # 7 ký tự: W + 000XXX
+        "service_type": random.choice(["FOOD", "TAXI", "MOBILE_TOPUP"]),
+        "promo_discount": round(random.uniform(1.0, 5.0), 2),
+        "base_amount": round(random.uniform(5.0, 200.0), 2),
+        "currency": "USD",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
     }
 
 def run_producer():
-    print("Khởi động Kafka Producer. Nối tới broker ở localhost:29092...")
-    # Broker port dựa trên cấu hình Docker (PLAINTEXT_HOST)
+    print("[!] Khởi động Producer: PAYMENT và EWALLET (Real-time Stream)...")
     producer = KafkaProducer(
         bootstrap_servers=['localhost:29092'],
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 
     topic_name = "realtime_transactions"
-    print(f"Bắt đầu đẩy dữ liệu (Streaming) vào topic '{topic_name}'...")
-
+    
     try:
         while True:
-            txn = create_mock_transaction()
+            # Gửi ngẫu nhiên giữa Payment và E-Wallet
+            txn = create_payment_transaction() if random.random() > 0.5 else create_wallet_transaction()
             producer.send(topic_name, value=txn)
-            print(f">>> Đã gửi Event: {txn['event_id']} - {txn['txn_type']} - Amount: {txn['amount']}")
-            # Nghỉ ngẫu nhiên 0.1 đến 1 giây để mô phỏng Real-time Event
+            print(f">>> Sent from {txn['source_system']}: ID {txn['event_id'][:8]} | Amount: {txn['base_amount']}")
             time.sleep(random.uniform(0.1, 1.0))
     except KeyboardInterrupt:
-        print("\nĐã dừng Mock Bank Events Producer.")
+        print("\n[!] Dừng Generator.")
     finally:
         producer.close()
 
