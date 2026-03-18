@@ -20,6 +20,13 @@ Write-Host "`n[Waiting 15s for Database and Kafka Broker to stabilize...]`n"
 Start-Sleep -Seconds 15
 
 Write-Host "=========================================================="
+Write-Host "STEP 2.5: START PROCESSING LAYER (Airflow & Spark)"
+Write-Host "=========================================================="
+cd 03_processing
+docker compose up -d
+cd ..
+
+Write-Host "=========================================================="
 Write-Host "STEP 3: START SERVING LAYER (Metabase & Jupyter Notebook)"
 Write-Host "=========================================================="
 cd 05_serving
@@ -27,7 +34,7 @@ docker compose up -d
 cd ..
 
 Write-Host "`n=========================================================="
-Write-Host "                 🚀 SUPER DEMO READY! 🚀"
+Write-Host "                 SUPER DEMO READY!"
 Write-Host "=========================================================="
 Write-Host "Services exposed on Localhost:"
 Write-Host "1. Kafka (Real-time Broker)       : Port 29092"

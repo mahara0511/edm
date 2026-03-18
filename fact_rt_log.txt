@@ -1,0 +1,30 @@
+﻿                dt.time_key,
+                1, -- K├¬nh Mobile mß║╖c ─æß╗ïnh
+                1, -- Sß╗æ l╞░ß╗úng transaction
+                rt.amount,
+                rt.amount, -- Giß║ú sß╗¡ kh├┤ng c├│ ph├¡
+                'SUCCESS'
+            FROM public.realtime_transactions rt
+            JOIN dw.dim_customer dc ON dc.cif_number = CAST(rt.account_id AS VARCHAR)
+            JOIN dw.dim_time dt ON dt.full_date = DATE(rt.timestamp)
+            LEFT JOIN dw.dim_merchant dm ON dm.merchant_name = rt.merchant
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:53:42.063+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:53:42.075+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T075339, start_date=20260318T075341, end_date=20260318T075342
+[2026-03-18T07:53:42.086+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 72 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1020)
+[2026-03-18T07:53:42.128+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:53:42.152+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check

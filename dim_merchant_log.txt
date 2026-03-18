@@ -1,0 +1,60 @@
+﻿            FROM public.realtime_transactions t
+            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_merchant WHERE merchant_name = t.merchant);
+        , parameters: None
+[2026-03-18T07:49:03.046+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.NotNullViolation: null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (3, null, White-Clark, General, null, null, null).
+
+[2026-03-18T07:49:03.058+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_dim_merchant, execution_date=20260318T074901, start_date=20260318T074902, end_date=20260318T074903
+[2026-03-18T07:49:03.068+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 55 for task load_dim_merchant (null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (3, null, White-Clark, General, null, null, null).
+; 905)
+[2026-03-18T07:49:03.114+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:49:03.173+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+            FROM public.realtime_transactions t
+            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_merchant WHERE merchant_name = t.merchant);
+        , parameters: None
+[2026-03-18T07:49:31.579+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.NotNullViolation: null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (5, null, White-Clark, General, null, null, null).
+
+[2026-03-18T07:49:31.591+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_dim_merchant, execution_date=20260318T074929, start_date=20260318T074931, end_date=20260318T074931
+[2026-03-18T07:49:31.602+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 59 for task load_dim_merchant (null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (5, null, White-Clark, General, null, null, null).
+; 922)
+[2026-03-18T07:49:31.650+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:49:31.693+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+            FROM public.realtime_transactions t
+            WHERE NOT EXISTS (SELECT 1 FROM dw.dim_merchant WHERE merchant_name = t.merchant);
+        , parameters: None
+[2026-03-18T07:49:55.952+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.NotNullViolation: null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (6, null, White-Clark, General, null, null, null).
+
+[2026-03-18T07:49:55.964+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_dim_merchant, execution_date=20260318T074953, start_date=20260318T074955, end_date=20260318T074955
+[2026-03-18T07:49:55.975+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 64 for task load_dim_merchant (null value in column "merchant_code" of relation "dim_merchant" violates not-null constraint
+DETAIL:  Failing row contains (6, null, White-Clark, General, null, null, null).
+; 930)
+[2026-03-18T07:49:56.021+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:49:56.098+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check

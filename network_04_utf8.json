@@ -1,0 +1,57 @@
+﻿[
+    {
+        "Name": "04_storage_default",
+        "Id": "e54446e15685f1b75baf2b87b2d635dbafbf548914b7f894d511b302fde6b212",
+        "Created": "2026-03-18T04:34:08.398353464Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "6cf2491fc35cab25172b0a4428db823b110cf8553ee60a0b8eecb27d71d52639": {
+                "Name": "edm-etl-adminer",
+                "EndpointID": "74a94432ee7ff18bd20d78b9d245d103b5a80a0e39a2a5d51e9b9bf158f32c2b",
+                "MacAddress": "02:42:ac:12:00:04",
+                "IPv4Address": "172.18.0.4/16",
+                "IPv6Address": ""
+            },
+            "82dc93d6b00469851dd01d618b8fde23ddcfbd2a90daa1a41483a2b29fde6488": {
+                "Name": "lakehouse-minio",
+                "EndpointID": "586d3e67bf142abdb35c9699849e8a7ce6d72b43e7822b9b1466d8ced80ba2de",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
+            },
+            "9124afed50083bc953614bf95641954c1beb442d7e3e3390e721aca4cfdebcf9": {
+                "Name": "lakehouse-postgres",
+                "EndpointID": "2b9dc012c11eef90461508d90a4ee58519239bb033cc6bdfef964fe63d94a897",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "f3dba6ed8d4f2eb0f53e7c83fc3674934c85752f2ebe0904c3caefc3a10c4add",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "04_storage",
+            "com.docker.compose.version": "2.32.4"
+        }
+    }
+]

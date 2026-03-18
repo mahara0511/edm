@@ -42,7 +42,7 @@ def run_producer():
             # Nghỉ ngẫu nhiên 0.1 đến 1 giây để mô phỏng Real-time Event
             time.sleep(random.uniform(0.1, 1.0))
     except KeyboardInterrupt:
-        print("\nĐã dừn Mock Bank Events Producer.")
+        print("\nĐã dừng Mock Bank Events Producer.")
     finally:
         producer.close()
 

@@ -1,0 +1,15 @@
+﻿                                                  Table "dw.dim_merchant"
+      Column       |          Type          | Collation | Nullable |                        Default                        
+-------------------+------------------------+-----------+----------+-------------------------------------------------------
+ merchant_key      | integer                |           | not null | nextval('dw.dim_merchant_merchant_key_seq'::regclass)
+ merchant_code     | character varying(20)  |           | not null | 
+ merchant_name     | character varying(100) |           |          | 
+ merchant_category | character varying(50)  |           |          | 
+ region            | character varying(50)  |           |          | 
+ branch_code       | character varying(10)  |           |          | 
+ status            | character varying(20)  |           |          | 
+Indexes:
+    "dim_merchant_pkey" PRIMARY KEY, btree (merchant_key)
+Referenced by:
+    TABLE "dw.fact_payment_transaction" CONSTRAINT "fact_payment_transaction_merchant_key_fkey" FOREIGN KEY (merchant_key) REFERENCES dw.dim_merchant(merchant_key)
+

@@ -50,34 +50,46 @@ python generate_realtime_events.py
 
 ---
 
-## 🎯 Step 4: Interact with The Serving Layer
+## Step 4: Interact with The Serving Layer
 
 Now that data is flowing seamlessly from End to End, you can access the powerful services deployed:
 
-### 1. 📈 BI Dashboard - Metabase (`http://localhost:3000`)
+### 1. BI Dashboard - Metabase (`http://localhost:3000`)
 - Use Metabase to create live visual analytics.
 - **Connect DB:** Type `PostgreSQL` | Host `host.docker.internal` | Port `5433` | Database `dw_edm` | User `edm_user` | Pass `edm_pass`.
 - View dynamic SQL charts updating as new Kafka transactions sink in.
 
-### 2. 🧠 Machine Learning Engine - Jupyter Notebook (`http://localhost:8888`)
+### 2. Machine Learning Engine - Jupyter Notebook (`http://localhost:8888`)
 - The primary code-base for Data Scientists.
 - Password is: `admin`
 - Write Python code here to load the massive history volumes spanning S3 `s3a://data-lake/raw/transactions/`.
 
-### 3. 🤖 AI Serving & Live Monitor - Streamlit App (`http://localhost:8501`)
+### 3. AI Serving & Live Monitor - Streamlit App (`http://localhost:8501`)
 - Open **http://localhost:8501** in your web browser.
 - A beautiful, interactive **End-to-End Streamlit Dashboard** lets you:
   - View the Real-time Database Sink updating live from Kafka/Spark.
   - Test the FastAPI Fraud Detection Neural Network by filling out a payment form and evaluating the Real-time Risk Score Percentage computed by our Random Forest model.
 
-### 4. 🔗 Model Serving API - FastAPI (`http://localhost:8000`)
+### 4. Model Serving API - FastAPI (`http://localhost:8000`)
 - The backend Machine Learning API that powers the Streamlit inference.
 - Head to **http://localhost:8000/docs** to see the Swagger UI.
 
-### 5. 🗄️ Run Batch Data Warehouse Pipelines (Airflow)
+### 5. Run Batch Data Warehouse Pipelines (Airflow)
 - Access **http://localhost:8080** (admin/admin).
 - Turn on the `.dag` file called `lakehouse_daily_etl_standard`.
 - It executes a standard batch process mimicking a robust corporate data pipeline mapping raw Sources directly into the structured Data Warehouse Star Schema!
+
+---
+
+## Troubleshooting
+
+**Download failed java.lang.RuntimeException for Spark Packages**:
+- **Why it happens**: This occurs if the `spark-submit` command is forcefully terminated (e.g. by pressing `Ctrl + C`) while it is actively downloading jars from the Maven repository (the first ~20 seconds). The half-downloaded jars corrupt the Ivy cache.
+- **How to fix it**: Run the following command to clear the broken cache inside the Spark container before trying again:
+  ```powershell
+  docker exec lakehouse-spark-worker rm -rf /root/.ivy2
+  ```
+- **How to prevent it**: Resist the urge to press `Ctrl + C` during the download phase. You should only terminate the streaming process AFTER the text `Bắt đầu lắng nghe Spark Streaming từ Kafka topic...` appears on the console. At this point, the download is 100% complete and safe to exit anytime.
 
 ---
 *Happy Engineering!*

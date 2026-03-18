@@ -2,17 +2,24 @@ x-airflow-common: &airflow-common
   image: apache/airflow:2.7.3
   environment:
     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-    - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://edm_user:edm_pass@host.docker.internal:5433/dw_edm                                                  
+    - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://edm_user:edm_pass@lakehouse-postgres:5432/dw_edm                                                  
     - AIRFLOW__CORE__LOAD_EXAMPLES=False
   volumes:
     - ./dags:/opt/airflow/dags
     - ./plugins:/opt/airflow/plugins
+  networks:
+    - default
+    - 04_storage_default
 
 services:
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
     command: webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://edm_user:edm_pass@lakehouse-postgres:5432/dw_edm
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
     ports:
       - "8080:8080"
     depends_on:
@@ -22,19 +29,26 @@ services:
     <<: *airflow-common
     container_name: airflow_scheduler
     command: scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://edm_user:edm_pass@lakehouse-postgres:5432/dw_edm
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
 
   airflow-init:
     <<: *airflow-common
     container_name: airflow_init
     command: version
     environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://edm_user:edm_pass@lakehouse-postgres:5432/dw_edm
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - _AIRFLOW_DB_UPGRADE=true
       - _AIRFLOW_WWW_USER_CREATE=true
       - _AIRFLOW_WWW_USER_USERNAME=admin
       - _AIRFLOW_WWW_USER_PASSWORD=admin
 
   spark-master:
-    image: spark:python3
+    image: spark:3.5.0-python3
     container_name: lakehouse-spark-master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
@@ -42,7 +56,7 @@ services:
       - "8089:8080"
 
   spark-worker:
-    image: spark:python3
+    image: spark:3.5.0-python3
     container_name: lakehouse-spark-worker
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://lakehouse-spark-master:7077
     user: root
@@ -54,4 +68,14 @@ services:
     volumes:
       - ./spark_jobs:/opt/spark/jobs
       - ../04_storage/data_lake:/opt/spark/data_lake
+    networks:
+      - default
+      - 02_ingestion_default
+      - 04_storage_default
+
+networks:
+  02_ingestion_default:
+    external: true
+  04_storage_default:
+    external: true
 

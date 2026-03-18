@@ -1,0 +1,395 @@
+﻿==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:48:00+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T07:58:04.532+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:58:04.543+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:58:04.549+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:58:04.553+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:58:04.564+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T074800, start_date=20260318T075804, end_date=20260318T075804
+[2026-03-18T07:58:04.599+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:58:04.638+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:48:00+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T07:58:04.550+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:58:04.552+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:58:04.564+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T074800, start_date=20260318T075804, end_date=20260318T075804
+[2026-03-18T07:58:04.600+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:58:04.653+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:48:00+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:58:04.559+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:58:04.570+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T074800, start_date=20260318T075804, end_date=20260318T075804
+[2026-03-18T07:58:04.580+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 91 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1100)
+[2026-03-18T07:58:04.600+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:58:04.623+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:01.368678+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T07:54:04.212+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:04.225+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:04.231+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:04.234+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:04.244+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T074901, start_date=20260318T075404, end_date=20260318T075404
+[2026-03-18T07:54:04.284+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:04.321+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:01.368678+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T07:54:04.230+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:04.233+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:04.244+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T074901, start_date=20260318T075404, end_date=20260318T075404
+[2026-03-18T07:54:04.284+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:04.307+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:01.368678+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:04.241+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:54:04.252+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T074901, start_date=20260318T075404, end_date=20260318T075404
+[2026-03-18T07:54:04.262+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 77 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1035)
+[2026-03-18T07:54:04.284+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:54:04.335+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:29.273584+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T07:54:33.053+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:33.065+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:33.071+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:33.075+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:33.086+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T074929, start_date=20260318T075432, end_date=20260318T075433
+[2026-03-18T07:54:33.117+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:33.140+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:29.273584+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T07:54:33.072+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:33.075+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:33.086+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T074929, start_date=20260318T075432, end_date=20260318T075433
+[2026-03-18T07:54:33.117+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:33.168+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:29.273584+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:33.082+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:54:33.093+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T074929, start_date=20260318T075432, end_date=20260318T075433
+[2026-03-18T07:54:33.103+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 82 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1048)
+[2026-03-18T07:54:33.117+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:54:33.154+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:53.440171+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T07:54:57.924+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:57.935+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:54:57.941+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:57.944+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:57.956+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T074953, start_date=20260318T075457, end_date=20260318T075457
+[2026-03-18T07:54:57.993+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:58.057+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:53.440171+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T07:54:57.941+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:57.944+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:54:57.956+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T074953, start_date=20260318T075457, end_date=20260318T075457
+[2026-03-18T07:54:57.993+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:54:58.044+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:49:53.440171+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:54:57.953+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:54:57.964+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T074953, start_date=20260318T075457, end_date=20260318T075457
+[2026-03-18T07:54:57.975+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 86 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1063)
+[2026-03-18T07:54:57.994+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:54:58.072+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:53:39+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T07:53:42.035+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:53:42.047+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T07:53:42.055+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:53:42.072+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:53:42.084+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T075339, start_date=20260318T075341, end_date=20260318T075342
+[2026-03-18T07:53:42.138+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:53:42.167+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:53:39+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T07:53:42.055+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:53:42.059+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T07:53:42.071+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T075339, start_date=20260318T075341, end_date=20260318T075342
+[2026-03-18T07:53:42.099+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T07:53:42.124+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T07:53:39+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T07:53:42.063+0000] {taskinstance.py:1937} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/operators/sql.py", line 280, in execute
+    output = hook.run(
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 392, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/common/sql/hooks/sql.py", line 423, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.ForeignKeyViolation: insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+
+[2026-03-18T07:53:42.075+0000] {taskinstance.py:1400} INFO - Marking task as UP_FOR_RETRY. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T075339, start_date=20260318T075341, end_date=20260318T075342
+[2026-03-18T07:53:42.086+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 72 for task load_fact_realtime_payments (insert or update on table "fact_payment_transaction" violates foreign key constraint "fact_payment_transaction_channel_key_fkey"
+DETAIL:  Key (channel_key)=(1) is not present in table "dim_channel".
+; 1020)
+[2026-03-18T07:53:42.128+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2026-03-18T07:53:42.152+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T08:08:11+00:00/task_id=load_fact_ewallet/attempt=1.log <==
+[2026-03-18T08:08:13.892+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T08:08:13.904+0000] {base.py:73} INFO - Using connection ID 'postgres_lakehouse' for task execution.
+[2026-03-18T08:08:13.910+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_ewallet_transaction f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_ewallet_transaction (customer_key, branch_key, time_key, channel_key, txn_amount, fee_amount, txn_type, txn_status)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 1, dim_t.time_key, 1, t.txn_amount, t.fee_amount, t.txn_type, t.txn_status
+            FROM ewallet.transaction t
+            LEFT JOIN ewallet.account acc ON t.account_id = acc.account_id
+            LEFT JOIN dw.dim_customer dim_c ON acc.user_id = dim_c.cif_number
+            INNER JOIN dw.dim_time dim_t ON DATE(t.txn_date) = dim_t.full_date
+            WHERE DATE(t.txn_date) = '2026-03-18';
+        , parameters: None
+[2026-03-18T08:08:13.913+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T08:08:13.924+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_ewallet, execution_date=20260318T080811, start_date=20260318T080813, end_date=20260318T080813
+[2026-03-18T08:08:13.959+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T08:08:13.990+0000] {taskinstance.py:2778} INFO - 1 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T08:08:11+00:00/task_id=load_fact_lending/attempt=1.log <==
+[2026-03-18T08:08:13.910+0000] {sql.py:418} INFO - Running statement: 
+            DELETE FROM dw.fact_debt_status f
+            USING dw.dim_time dt
+            WHERE f.time_key = dt.time_key AND dt.full_date = '2026-03-18';
+
+            INSERT INTO dw.fact_debt_status (customer_key, branch_key, product_key, time_key, principal_amount, total_outstanding, risk_bucket)
+            SELECT 
+                COALESCE(dim_c.customer_key, 1), 
+                COALESCE(dim_b.branch_key, 1), 
+                1, dim_t.time_key, ml.principal_amount, ml.total_outstanding, 'CURRENT'
+            FROM corebank.mortgage_loan ml
+            LEFT JOIN dw.dim_customer dim_c ON ml.cif = dim_c.cif_number
+            LEFT JOIN dw.dim_branch dim_b ON ml.branch_code = dim_b.branch_code
+            INNER JOIN dw.dim_time dim_t ON ml.disbursement_date = dim_t.full_date
+            WHERE ml.disbursement_date = '2026-03-18';
+        , parameters: None
+[2026-03-18T08:08:13.913+0000] {sql.py:427} INFO - Rows affected: 0
+[2026-03-18T08:08:13.924+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_lending, execution_date=20260318T080811, start_date=20260318T080813, end_date=20260318T080813
+[2026-03-18T08:08:13.959+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T08:08:14.004+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check
+
+==> /opt/airflow/logs/dag_id=lakehouse_daily_etl_standard/run_id=manual__2026-03-18T08:08:11+00:00/task_id=load_fact_realtime_payments/attempt=1.log <==
+                COALESCE(dc.customer_key, 1),
+                COALESCE(dm.merchant_key, 1),
+                COALESCE(db.branch_key, 1),
+                dt.time_key,
+                1, -- K├¬nh Mobile mß║╖c ─æß╗ïnh
+                1, -- Sß╗æ l╞░ß╗úng transaction
+                rt.amount,
+                rt.amount, -- Giß║ú sß╗¡ kh├┤ng c├│ ph├¡
+                'SUCCESS'
+            FROM public.realtime_transactions rt
+            JOIN dw.dim_customer dc ON dc.cif_number = CAST(rt.account_id AS VARCHAR)
+            JOIN dw.dim_time dt ON dt.full_date = DATE(rt.timestamp)
+            LEFT JOIN dw.dim_merchant dm ON dm.merchant_name = rt.merchant
+            LEFT JOIN dw.dim_branch db ON db.branch_code = 'MAIN'
+            WHERE DATE(rt.timestamp) = '2026-03-18';
+        , parameters: None
+[2026-03-18T08:08:13.937+0000] {sql.py:427} INFO - Rows affected: 869
+[2026-03-18T08:08:13.948+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=lakehouse_daily_etl_standard, task_id=load_fact_realtime_payments, execution_date=20260318T080811, start_date=20260318T080813, end_date=20260318T080813
+[2026-03-18T08:08:13.999+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2026-03-18T08:08:14.022+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check

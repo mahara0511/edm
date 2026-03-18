@@ -5,8 +5,8 @@ Cần chạy bằng: spark-submit --packages org.apache.spark:spark-sql-kafka-0-
 """
 import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType
+from pyspark.sql.functions import from_json, col, to_timestamp
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, TimestampType
 
 # Define Kafka Schema tương ứng với dữ liệu giả lập từ thư mục 01
 schema = StructType([
@@ -42,7 +42,7 @@ def process_stream():
     # 1. Đọc stream từ Kafka (Dùng tên container kafka thay vì localhost)
     df_kafka = spark.readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "host.docker.internal:29092") \
+        .option("kafka.bootstrap.servers", "kafka:9092") \
         .option("subscribe", "realtime_transactions") \
         .option("startingOffsets", "latest") \
         .load()
@@ -50,6 +50,7 @@ def process_stream():
     # 2. Transform JSON (Chuyển byte sang JSON format)
     df_json = df_kafka.selectExpr("CAST(value AS STRING)")
     df_parsed = df_json.select(from_json(col("value"), schema).alias("data")).select("data.*")
+    df_parsed = df_parsed.withColumn("timestamp", to_timestamp(col("timestamp"), "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"))
 
     # 3. Ghi song song: 
     #   - Ghi xuống Cold Storage (Data Lake: MinIO S3 Object Storage)
@@ -67,7 +68,7 @@ def process_stream():
         # 2. Ghi vào PostgreSQL (Operational DB)
         batch_df.write \
             .format("jdbc") \
-            .option("url", "jdbc:postgresql://host.docker.internal:5433/dw_edm") \
+            .option("url", "jdbc:postgresql://lakehouse-postgres:5432/dw_edm") \
             .option("dbtable", "public.realtime_transactions") \
             .option("user", "edm_user") \
             .option("password", "edm_pass") \
@@ -77,6 +78,7 @@ def process_stream():
 
     query_postgres = df_parsed.writeStream \
         .outputMode("append") \
+        .option("checkpointLocation", "s3a://data-lake/checkpoints/postgres") \
         .foreachBatch(write_to_postgres_and_console) \
         .start()
 

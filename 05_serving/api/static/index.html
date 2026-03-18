@@ -333,27 +333,27 @@
 
         <div class="pipeline">
             <div class="node" style="animation: fadeInDown 0.6s 0.1s both;">
-                <div class="icon">📱</div>
+                <div class="icon"></div>
                 <h3>1. Source</h3>
                 <p>Fake Events Generator</p>
             </div>
             <div class="node" style="animation: fadeInDown 0.6s 0.2s both;">
-                <div class="icon">🚀</div>
+                <div class="icon"></div>
                 <h3>2. Ingestion</h3>
                 <p>Kafka Streaming Event Bus</p>
             </div>
             <div class="node" style="animation: fadeInDown 0.6s 0.3s both;">
-                <div class="icon">⚡</div>
+                <div class="icon"></div>
                 <h3>3. Processing</h3>
                 <p>Spark Structured Streaming</p>
             </div>
             <div class="node" style="animation: fadeInDown 0.6s 0.4s both;">
-                <div class="icon">🗄️</div>
+                <div class="icon"></div>
                 <h3>4. Storage</h3>
                 <p>MinIO Lake & Postgres DW</p>
             </div>
             <div class="node" style="animation: fadeInDown 0.6s 0.5s both; border-color: rgba(255,8,68,0.5);">
-                <div class="icon">🧠</div>
+                <div class="icon"></div>
                 <h3>5. AI Serving</h3>
                 <p>FastAPI Fraud Model</p>
             </div>
@@ -393,7 +393,7 @@
                 <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Powered by Random Forest</p>
                 
                 <div class="result-area" id="resultBox">
-                    <div class="result-icon" id="resIcon">🤖</div>
+                    <div class="result-icon" id="resIcon"></div>
                     <div class="result-status" id="resStatus">Awaiting Data...</div>
                     <div class="result-score" id="resScore">--%</div>
                     <div class="result-log" id="resLog"></div>
@@ -425,7 +425,7 @@
             btn.innerHTML = 'Analyzing... <span class="live-indicator" style="margin-left:8px; margin-right:0;"></span>';
             btn.style.opacity = '0.7';
             resultBox.className = 'result-area';
-            resIcon.innerHTML = '⏳';
+            resIcon.innerHTML = '';
             resStatus.innerText = 'Running Inference...';
             resScore.innerText = '--';
             resLog.style.display = 'none';
@@ -450,17 +450,17 @@
 
                 if (data.is_fraud) {
                     resultBox.className = 'result-area is-fraud';
-                    resIcon.innerHTML = '🚨';
+                    resIcon.innerHTML = '';
                     resStatus.innerText = 'HIGH RISK DECTECTED (FRAUD)';
                 } else {
                     resultBox.className = 'result-area is-safe';
-                    resIcon.innerHTML = '✅';
+                    resIcon.innerHTML = '';
                     resStatus.innerText = 'TRANSACTION SAFE';
                 }
 
             } catch (error) {
                 resultBox.className = 'result-area';
-                resIcon.innerHTML = '❌';
+                resIcon.innerHTML = '';
                 resStatus.innerText = 'Connection Failed';
                 resScore.innerText = 'ERR';
                 console.error(error);

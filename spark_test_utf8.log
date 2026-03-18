@@ -1,0 +1,935 @@
+﻿:: loading settings :: url = jar:file:/opt/spark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+docker : Ivy Default Cache 
+set to: /root/.ivy2/cache
+At line:1 char:1
++ docker exec 
+lakehouse-spark-worker 
+/opt/spark/bin/spark-submit 
+--pack ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Ivy Def  
+  ault Cac...oot/.ivy2/cac   
+ he:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+The jars for the packages 
+stored in: /root/.ivy2/jars
+org.apache.spark#spark-sql-ka
+fka-0-10_2.12 added as a 
+dependency
+org.postgresql#postgresql 
+added as a dependency
+org.apache.hadoop#hadoop-aws 
+added as a dependency
+com.amazonaws#aws-java-sdk-bu
+ndle added as a dependency
+:: resolving dependencies :: 
+org.apache.spark#spark-submit
+-parent-239d53a8-6e50-4c6a-bd
+56-94a38244587c;1.0
+	confs: [default]
+	found org.apache.spark#spark
+-sql-kafka-0-10_2.12;3.5.0 
+in central
+	found org.apache.spark#spark
+-token-provider-kafka-0-10_2.
+12;3.5.0 in central
+	found org.apache.kafka#kafka
+-clients;3.4.1 in central
+	found 
+org.lz4#lz4-java;1.8.0 in 
+central
+	found org.xerial.snappy#snap
+py-java;1.1.10.3 in central
+	found 
+org.slf4j#slf4j-api;2.0.7 in 
+central
+	found org.apache.hadoop#hado
+op-client-runtime;3.3.4 in 
+central
+	found org.apache.hadoop#hado
+op-client-api;3.3.4 in 
+central
+	found commons-logging#common
+s-logging;1.1.3 in central
+	found com.google.code.findbu
+gs#jsr305;3.0.0 in central
+	found org.apache.commons#com
+mons-pool2;2.11.1 in central
+	found org.postgresql#postgre
+sql;42.6.0 in central
+	found org.checkerframework#c
+hecker-qual;3.31.0 in central
+	found org.apache.hadoop#hado
+op-aws;3.3.4 in central
+	found com.amazonaws#aws-java
+-sdk-bundle;1.12.262 in 
+central
+	found org.wildfly.openssl#wi
+ldfly-openssl;1.0.7.Final in 
+central
+downloading https://repo1.mav
+en.org/maven2/org/apache/spar
+k/spark-sql-kafka-0-10_2.12/3
+.5.0/spark-sql-kafka-0-10_2.1
+2-3.5.0.jar ...
+	[SUCCESSFUL ] org.apache.spa
+rk#spark-sql-kafka-0-10_2.12;
+3.5.0!spark-sql-kafka-0-10_2.
+12.jar (235ms)
+downloading https://repo1.mav
+en.org/maven2/org/postgresql/
+postgresql/42.6.0/postgresql-
+42.6.0.jar ...
+	[SUCCESSFUL ] org.postgresql
+#postgresql;42.6.0!postgresql
+.jar (207ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/hado
+op/hadoop-aws/3.3.4/hadoop-aw
+s-3.3.4.jar ...
+	[SUCCESSFUL ] org.apache.had
+oop#hadoop-aws;3.3.4!hadoop-a
+ws.jar (141ms)
+downloading https://repo1.mav
+en.org/maven2/com/amazonaws/a
+ws-java-sdk-bundle/1.12.262/a
+ws-java-sdk-bundle-1.12.262.j
+ar ...
+	[SUCCESSFUL ] com.amazonaws#
+aws-java-sdk-bundle;1.12.262!
+aws-java-sdk-bundle.jar 
+(10480ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/spar
+k/spark-token-provider-kafka-
+0-10_2.12/3.5.0/spark-token-p
+rovider-kafka-0-10_2.12-3.5.0
+.jar ...
+	[SUCCESSFUL ] org.apache.spa
+rk#spark-token-provider-kafka
+-0-10_2.12;3.5.0!spark-token-
+provider-kafka-0-10_2.12.jar 
+(97ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/kafk
+a/kafka-clients/3.4.1/kafka-c
+lients-3.4.1.jar ...
+	[SUCCESSFUL ] org.apache.kaf
+ka#kafka-clients;3.4.1!kafka-
+clients.jar (273ms)
+downloading https://repo1.mav
+en.org/maven2/com/google/code
+/findbugs/jsr305/3.0.0/jsr305
+-3.0.0.jar ...
+	[SUCCESSFUL ] com.google.cod
+e.findbugs#jsr305;3.0.0!jsr30
+5.jar (100ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/comm
+ons/commons-pool2/2.11.1/comm
+ons-pool2-2.11.1.jar ...
+	[SUCCESSFUL ] org.apache.com
+mons#commons-pool2;2.11.1!com
+mons-pool2.jar (102ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/hado
+op/hadoop-client-runtime/3.3.
+4/hadoop-client-runtime-3.3.4
+.jar ...
+	[SUCCESSFUL ] org.apache.had
+oop#hadoop-client-runtime;3.3
+.4!hadoop-client-runtime.jar 
+(1111ms)
+downloading https://repo1.mav
+en.org/maven2/org/lz4/lz4-jav
+a/1.8.0/lz4-java-1.8.0.jar 
+...
+	[SUCCESSFUL ] org.lz4#lz4-ja
+va;1.8.0!lz4-java.jar (126ms)
+downloading https://repo1.mav
+en.org/maven2/org/xerial/snap
+py/snappy-java/1.1.10.3/snapp
+y-java-1.1.10.3.jar ...
+	[SUCCESSFUL ] org.xerial.sna
+ppy#snappy-java;1.1.10.3!snap
+py-java.jar(bundle) (159ms)
+downloading https://repo1.mav
+en.org/maven2/org/slf4j/slf4j
+-api/2.0.7/slf4j-api-2.0.7.ja
+r ...
+	[SUCCESSFUL ] org.slf4j#slf4
+j-api;2.0.7!slf4j-api.jar 
+(95ms)
+downloading https://repo1.mav
+en.org/maven2/org/apache/hado
+op/hadoop-client-api/3.3.4/ha
+doop-client-api-3.3.4.jar ...
+	[SUCCESSFUL ] org.apache.had
+oop#hadoop-client-api;3.3.4!h
+adoop-client-api.jar (712ms)
+downloading https://repo1.mav
+en.org/maven2/commons-logging
+/commons-logging/1.1.3/common
+s-logging-1.1.3.jar ...
+	[SUCCESSFUL ] commons-loggin
+g#commons-logging;1.1.3!commo
+ns-logging.jar (98ms)
+downloading https://repo1.mav
+en.org/maven2/org/checkerfram
+ework/checker-qual/3.31.0/che
+cker-qual-3.31.0.jar ...
+	[SUCCESSFUL ] org.checkerfra
+mework#checker-qual;3.31.0!ch
+ecker-qual.jar (114ms)
+downloading https://repo1.mav
+en.org/maven2/org/wildfly/ope
+nssl/wildfly-openssl/1.0.7.Fi
+nal/wildfly-openssl-1.0.7.Fin
+al.jar ...
+	[SUCCESSFUL ] org.wildfly.op
+enssl#wildfly-openssl;1.0.7.F
+inal!wildfly-openssl.jar 
+(108ms)
+:: resolution report :: 
+resolve 9909ms :: artifacts 
+dl 14166ms
+	:: modules in use:
+	com.amazonaws#aws-java-sdk-b
+undle;1.12.262 from central 
+in [default]
+	com.google.code.findbugs#jsr
+305;3.0.0 from central in 
+[default]
+	commons-logging#commons-logg
+ing;1.1.3 from central in 
+[default]
+	org.apache.commons#commons-p
+ool2;2.11.1 from central in 
+[default]
+	org.apache.hadoop#hadoop-aws
+;3.3.4 from central in 
+[default]
+	org.apache.hadoop#hadoop-cli
+ent-api;3.3.4 from central 
+in [default]
+	org.apache.hadoop#hadoop-cli
+ent-runtime;3.3.4 from 
+central in [default]
+	org.apache.kafka#kafka-clien
+ts;3.4.1 from central in 
+[default]
+	org.apache.spark#spark-sql-k
+afka-0-10_2.12;3.5.0 from 
+central in [default]
+	org.apache.spark#spark-token
+-provider-kafka-0-10_2.12;3.5
+.0 from central in [default]
+	org.checkerframework#checker
+-qual;3.31.0 from central in 
+[default]
+	org.lz4#lz4-java;1.8.0 from 
+central in [default]
+	org.postgresql#postgresql;42
+.6.0 from central in 
+[default]
+	org.slf4j#slf4j-api;2.0.7 
+from central in [default]
+	org.wildfly.openssl#wildfly-
+openssl;1.0.7.Final from 
+central in [default]
+	org.xerial.snappy#snappy-jav
+a;1.1.10.3 from central in 
+[default]
+	----------------------------
+-----------------------------
+------------
+	|                  |        
+    modules            ||   
+artifacts   |
+	|       conf       | 
+number| 
+search|dwnlded|evicted|| 
+number|dwnlded|
+	----------------------------
+-----------------------------
+------------
+	|      default     |   16  
+|   16  |   16  |   0   ||   
+16  |   16  |
+	----------------------------
+-----------------------------
+------------
+:: retrieving :: org.apache.s
+park#spark-submit-parent-239d
+53a8-6e50-4c6a-bd56-94a382445
+87c
+	confs: [default]
+	16 artifacts copied, 0 
+already retrieved 
+(333464kB/565ms)
+26/03/18 03:56:35 WARN 
+NativeCodeLoader: Unable to 
+load native-hadoop library 
+for your platform... using 
+builtin-java classes where 
+applicable
+26/03/18 03:56:35 INFO 
+SparkContext: Running Spark 
+version 3.5.0
+26/03/18 03:56:35 INFO 
+SparkContext: OS info Linux, 
+6.6.87.2-microsoft-standard-W
+SL2, amd64
+26/03/18 03:56:35 INFO 
+SparkContext: Java version 
+11.0.24
+26/03/18 03:56:35 INFO 
+ResourceUtils: ==============
+=============================
+===================
+26/03/18 03:56:35 INFO 
+ResourceUtils: No custom 
+resources configured for 
+spark.driver.
+26/03/18 03:56:35 INFO 
+ResourceUtils: ==============
+=============================
+===================
+26/03/18 03:56:35 INFO 
+SparkContext: Submitted 
+application: 
+Lakehouse-Realtime-ETL
+26/03/18 03:56:35 INFO 
+ResourceProfile: Default 
+ResourceProfile created, 
+executor resources: 
+Map(memory -> name: memory, 
+amount: 1024, script: , 
+vendor: , offHeap -> name: 
+offHeap, amount: 0, script: 
+, vendor: ), task resources: 
+Map(cpus -> name: cpus, 
+amount: 1.0)
+26/03/18 03:56:35 INFO 
+ResourceProfile: Limiting 
+resource is cpu
+26/03/18 03:56:35 INFO 
+ResourceProfileManager: 
+Added ResourceProfile id: 0
+26/03/18 03:56:35 INFO 
+SecurityManager: Changing 
+view acls to: root
+26/03/18 03:56:35 INFO 
+SecurityManager: Changing 
+modify acls to: root
+26/03/18 03:56:35 INFO 
+SecurityManager: Changing 
+view acls groups to: 
+26/03/18 03:56:35 INFO 
+SecurityManager: Changing 
+modify acls groups to: 
+26/03/18 03:56:35 INFO 
+SecurityManager: 
+SecurityManager: 
+authentication disabled; ui 
+acls disabled; users with 
+view permissions: root; 
+groups with view 
+permissions: EMPTY; users 
+with modify permissions: 
+root; groups with modify 
+permissions: EMPTY
+26/03/18 03:56:36 INFO 
+Utils: Successfully started 
+service 'sparkDriver' on 
+port 44603.
+26/03/18 03:56:36 INFO 
+SparkEnv: Registering 
+MapOutputTracker
+26/03/18 03:56:36 INFO 
+SparkEnv: Registering 
+BlockManagerMaster
+26/03/18 03:56:36 INFO 
+BlockManagerMasterEndpoint: 
+Using org.apache.spark.storag
+e.DefaultTopologyMapper for 
+getting topology information
+26/03/18 03:56:36 INFO 
+BlockManagerMasterEndpoint: 
+BlockManagerMasterEndpoint up
+26/03/18 03:56:36 INFO 
+SparkEnv: Registering 
+BlockManagerMasterHeartbeat
+26/03/18 03:56:36 INFO 
+DiskBlockManager: Created 
+local directory at /tmp/block
+mgr-93da706f-a5b4-4b7b-8853-0
+5a828a9008d
+26/03/18 03:56:36 INFO 
+MemoryStore: MemoryStore 
+started with capacity 434.4 
+MiB
+26/03/18 03:56:36 INFO 
+SparkEnv: Registering 
+OutputCommitCoordinator
+26/03/18 03:56:36 INFO 
+JettyUtils: Start Jetty 
+0.0.0.0:4040 for SparkUI
+26/03/18 03:56:36 INFO 
+Utils: Successfully started 
+service 'SparkUI' on port 
+4040.
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.spark_spark-sql-kafka-0-10_2
+.12-3.5.0.jar at spark://877f
+5102cefa:44603/jars/org.apach
+e.spark_spark-sql-kafka-0-10_
+2.12-3.5.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.postgr
+esql_postgresql-42.6.0.jar 
+at spark://877f5102cefa:44603
+/jars/org.postgresql_postgres
+ql-42.6.0.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.hadoop_hadoop-aws-3.3.4.jar 
+at spark://877f5102cefa:44603
+/jars/org.apache.hadoop_hadoo
+p-aws-3.3.4.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/com.amazon
+aws_aws-java-sdk-bundle-1.12.
+262.jar at spark://877f5102ce
+fa:44603/jars/com.amazonaws_a
+ws-java-sdk-bundle-1.12.262.j
+ar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.spark_spark-token-provider-k
+afka-0-10_2.12-3.5.0.jar at s
+park://877f5102cefa:44603/jar
+s/org.apache.spark_spark-toke
+n-provider-kafka-0-10_2.12-3.
+5.0.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.kafka_kafka-clients-3.4.1.ja
+r at spark://877f5102cefa:446
+03/jars/org.apache.kafka_kafk
+a-clients-3.4.1.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/com.google
+.code.findbugs_jsr305-3.0.0.j
+ar at spark://877f5102cefa:44
+603/jars/com.google.code.find
+bugs_jsr305-3.0.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.commons_commons-pool2-2.11.1
+.jar at spark://877f5102cefa:
+44603/jars/org.apache.commons
+_commons-pool2-2.11.1.jar 
+with timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.hadoop_hadoop-client-runtime
+-3.3.4.jar at spark://877f510
+2cefa:44603/jars/org.apache.h
+adoop_hadoop-client-runtime-3
+.3.4.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.lz4_lz
+4-java-1.8.0.jar at spark://8
+77f5102cefa:44603/jars/org.lz
+4_lz4-java-1.8.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.xerial
+.snappy_snappy-java-1.1.10.3.
+jar at spark://877f5102cefa:4
+4603/jars/org.xerial.snappy_s
+nappy-java-1.1.10.3.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.slf4j_
+slf4j-api-2.0.7.jar at spark:
+//877f5102cefa:44603/jars/org
+.slf4j_slf4j-api-2.0.7.jar 
+with timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.apache
+.hadoop_hadoop-client-api-3.3
+.4.jar at spark://877f5102cef
+a:44603/jars/org.apache.hadoo
+p_hadoop-client-api-3.3.4.jar
+ with timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/commons-lo
+gging_commons-logging-1.1.3.j
+ar at spark://877f5102cefa:44
+603/jars/commons-logging_comm
+ons-logging-1.1.3.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.checke
+rframework_checker-qual-3.31.
+0.jar at spark://877f5102cefa
+:44603/jars/org.checkerframew
+ork_checker-qual-3.31.0.jar 
+with timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added JAR file:
+///root/.ivy2/jars/org.wildfl
+y.openssl_wildfly-openssl-1.0
+.7.Final.jar at spark://877f5
+102cefa:44603/jars/org.wildfl
+y.openssl_wildfly-openssl-1.0
+.7.Final.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.spark_spark-sql-kafka-0-10_
+2.12-3.5.0.jar at spark://877
+f5102cefa:44603/files/org.apa
+che.spark_spark-sql-kafka-0-1
+0_2.12-3.5.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.spark_spark-sql
+-kafka-0-10_2.12-3.5.0.jar 
+to /tmp/spark-b080f7b9-f90f-4
+742-bfb1-c2c33babd478/userFil
+es-6eef323a-23ee-4de2-aeac-74
+1bf1db89cb/org.apache.spark_s
+park-sql-kafka-0-10_2.12-3.5.
+0.jar
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.postg
+resql_postgresql-42.6.0.jar 
+at spark://877f5102cefa:44603
+/files/org.postgresql_postgre
+sql-42.6.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.postgresql_postgresql-
+42.6.0.jar to /tmp/spark-b080
+f7b9-f90f-4742-bfb1-c2c33babd
+478/userFiles-6eef323a-23ee-4
+de2-aeac-741bf1db89cb/org.pos
+tgresql_postgresql-42.6.0.jar
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.hadoop_hadoop-aws-3.3.4.jar
+ at spark://877f5102cefa:4460
+3/files/org.apache.hadoop_had
+oop-aws-3.3.4.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.hadoop_hadoop-a
+ws-3.3.4.jar to /tmp/spark-b0
+80f7b9-f90f-4742-bfb1-c2c33ba
+bd478/userFiles-6eef323a-23ee
+-4de2-aeac-741bf1db89cb/org.a
+pache.hadoop_hadoop-aws-3.3.4
+.jar
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/com.amazo
+naws_aws-java-sdk-bundle-1.12
+.262.jar at spark://877f5102c
+efa:44603/files/com.amazonaws
+_aws-java-sdk-bundle-1.12.262
+.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/com.amazonaws_aws-java-sdk
+-bundle-1.12.262.jar to /tmp/
+spark-b080f7b9-f90f-4742-bfb1
+-c2c33babd478/userFiles-6eef3
+23a-23ee-4de2-aeac-741bf1db89
+cb/com.amazonaws_aws-java-sdk
+-bundle-1.12.262.jar
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.spark_spark-token-provider-
+kafka-0-10_2.12-3.5.0.jar at 
+spark://877f5102cefa:44603/fi
+les/org.apache.spark_spark-to
+ken-provider-kafka-0-10_2.12-
+3.5.0.jar with timestamp 
+1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.spark_spark-tok
+en-provider-kafka-0-10_2.12-3
+.5.0.jar to /tmp/spark-b080f7
+b9-f90f-4742-bfb1-c2c33babd47
+8/userFiles-6eef323a-23ee-4de
+2-aeac-741bf1db89cb/org.apach
+e.spark_spark-token-provider-
+kafka-0-10_2.12-3.5.0.jar
+26/03/18 03:56:36 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.kafka_kafka-clients-3.4.1.j
+ar at spark://877f5102cefa:44
+603/files/org.apache.kafka_ka
+fka-clients-3.4.1.jar with 
+timestamp 1773806195868
+26/03/18 03:56:36 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.kafka_kafka-cli
+ents-3.4.1.jar to /tmp/spark-
+b080f7b9-f90f-4742-bfb1-c2c33
+babd478/userFiles-6eef323a-23
+ee-4de2-aeac-741bf1db89cb/org
+.apache.kafka_kafka-clients-3
+.4.1.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/com.googl
+e.code.findbugs_jsr305-3.0.0.
+jar at spark://877f5102cefa:4
+4603/files/com.google.code.fi
+ndbugs_jsr305-3.0.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/com.google.code.findbugs_j
+sr305-3.0.0.jar to /tmp/spark
+-b080f7b9-f90f-4742-bfb1-c2c3
+3babd478/userFiles-6eef323a-2
+3ee-4de2-aeac-741bf1db89cb/co
+m.google.code.findbugs_jsr305
+-3.0.0.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.commons_commons-pool2-2.11.
+1.jar at spark://877f5102cefa
+:44603/files/org.apache.commo
+ns_commons-pool2-2.11.1.jar 
+with timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.commons_commons
+-pool2-2.11.1.jar to /tmp/spa
+rk-b080f7b9-f90f-4742-bfb1-c2
+c33babd478/userFiles-6eef323a
+-23ee-4de2-aeac-741bf1db89cb/
+org.apache.commons_commons-po
+ol2-2.11.1.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.hadoop_hadoop-client-runtim
+e-3.3.4.jar at spark://877f51
+02cefa:44603/files/org.apache
+.hadoop_hadoop-client-runtime
+-3.3.4.jar with timestamp 
+1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.hadoop_hadoop-c
+lient-runtime-3.3.4.jar to /t
+mp/spark-b080f7b9-f90f-4742-b
+fb1-c2c33babd478/userFiles-6e
+ef323a-23ee-4de2-aeac-741bf1d
+b89cb/org.apache.hadoop_hadoo
+p-client-runtime-3.3.4.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.lz4_l
+z4-java-1.8.0.jar at spark://
+877f5102cefa:44603/files/org.
+lz4_lz4-java-1.8.0.jar with 
+timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.lz4_lz4-java-1.8.0.jar
+ to /tmp/spark-b080f7b9-f90f-
+4742-bfb1-c2c33babd478/userFi
+les-6eef323a-23ee-4de2-aeac-7
+41bf1db89cb/org.lz4_lz4-java-
+1.8.0.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.xeria
+l.snappy_snappy-java-1.1.10.3
+.jar at spark://877f5102cefa:
+44603/files/org.xerial.snappy
+_snappy-java-1.1.10.3.jar 
+with timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.xerial.snappy_snappy-j
+ava-1.1.10.3.jar to /tmp/spar
+k-b080f7b9-f90f-4742-bfb1-c2c
+33babd478/userFiles-6eef323a-
+23ee-4de2-aeac-741bf1db89cb/o
+rg.xerial.snappy_snappy-java-
+1.1.10.3.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.slf4j
+_slf4j-api-2.0.7.jar at spark
+://877f5102cefa:44603/files/o
+rg.slf4j_slf4j-api-2.0.7.jar 
+with timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.slf4j_slf4j-api-2.0.7.
+jar to /tmp/spark-b080f7b9-f9
+0f-4742-bfb1-c2c33babd478/use
+rFiles-6eef323a-23ee-4de2-aea
+c-741bf1db89cb/org.slf4j_slf4
+j-api-2.0.7.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.apach
+e.hadoop_hadoop-client-api-3.
+3.4.jar at spark://877f5102ce
+fa:44603/files/org.apache.had
+oop_hadoop-client-api-3.3.4.j
+ar with timestamp 
+1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.apache.hadoop_hadoop-c
+lient-api-3.3.4.jar to /tmp/s
+park-b080f7b9-f90f-4742-bfb1-
+c2c33babd478/userFiles-6eef32
+3a-23ee-4de2-aeac-741bf1db89c
+b/org.apache.hadoop_hadoop-cl
+ient-api-3.3.4.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/commons-l
+ogging_commons-logging-1.1.3.
+jar at spark://877f5102cefa:4
+4603/files/commons-logging_co
+mmons-logging-1.1.3.jar with 
+timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/commons-logging_commons-lo
+gging-1.1.3.jar to /tmp/spark
+-b080f7b9-f90f-4742-bfb1-c2c3
+3babd478/userFiles-6eef323a-2
+3ee-4de2-aeac-741bf1db89cb/co
+mmons-logging_commons-logging
+-1.1.3.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.check
+erframework_checker-qual-3.31
+.0.jar at spark://877f5102cef
+a:44603/files/org.checkerfram
+ework_checker-qual-3.31.0.jar
+ with timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.checkerframework_check
+er-qual-3.31.0.jar to /tmp/sp
+ark-b080f7b9-f90f-4742-bfb1-c
+2c33babd478/userFiles-6eef323
+a-23ee-4de2-aeac-741bf1db89cb
+/org.checkerframework_checker
+-qual-3.31.0.jar
+26/03/18 03:56:37 INFO 
+SparkContext: Added file file
+:///root/.ivy2/jars/org.wildf
+ly.openssl_wildfly-openssl-1.
+0.7.Final.jar at spark://877f
+5102cefa:44603/files/org.wild
+fly.openssl_wildfly-openssl-1
+.0.7.Final.jar with 
+timestamp 1773806195868
+26/03/18 03:56:37 INFO 
+Utils: Copying /root/.ivy2/ja
+rs/org.wildfly.openssl_wildfl
+y-openssl-1.0.7.Final.jar to 
+/tmp/spark-b080f7b9-f90f-4742
+-bfb1-c2c33babd478/userFiles-
+6eef323a-23ee-4de2-aeac-741bf
+1db89cb/org.wildfly.openssl_w
+ildfly-openssl-1.0.7.Final.ja
+r
+26/03/18 03:56:37 INFO Standa
+loneAppClient$ClientEndpoint:
+ Connecting to master 
+spark://spark-master:7077...
+26/03/18 03:56:37 INFO 
+TransportClientFactory: 
+Successfully created 
+connection to 
+spark-master/172.24.0.4:7077 
+after 20 ms (0 ms spent in 
+bootstraps)
+26/03/18 03:56:37 INFO 
+StandaloneSchedulerBackend: 
+Connected to Spark cluster 
+with app ID 
+app-20260318035637-0000
+26/03/18 03:56:37 INFO 
+Utils: Successfully started 
+service 'org.apache.spark.net
+work.netty.NettyBlockTransfer
+Service' on port 34929.
+26/03/18 03:56:37 INFO 
+NettyBlockTransferService: 
+Server created on 
+877f5102cefa:34929
+26/03/18 03:56:37 INFO 
+BlockManager: Using org.apach
+e.spark.storage.RandomBlockRe
+plicationPolicy for block 
+replication policy
+26/03/18 03:56:37 INFO 
+BlockManagerMaster: 
+Registering BlockManager 
+BlockManagerId(driver, 
+877f5102cefa, 34929, None)
+26/03/18 03:56:37 INFO 
+BlockManagerMasterEndpoint: 
+Registering block manager 
+877f5102cefa:34929 with 
+434.4 MiB RAM, 
+BlockManagerId(driver, 
+877f5102cefa, 34929, None)
+26/03/18 03:56:37 INFO Standa
+loneAppClient$ClientEndpoint:
+ Executor added: 
+app-20260318035637-0000/0 on 
+worker-20260318035245-172.21.
+0.5-37689 (172.21.0.5:37689) 
+with 2 core(s)
+26/03/18 03:56:37 INFO 
+StandaloneSchedulerBackend: 
+Granted executor ID 
+app-20260318035637-0000/0 on 
+hostPort 172.21.0.5:37689 
+with 2 core(s), 1024.0 MiB 
+RAM
+26/03/18 03:56:37 INFO 
+BlockManagerMaster: 
+Registered BlockManager 
+BlockManagerId(driver, 
+877f5102cefa, 34929, None)
+26/03/18 03:56:37 INFO 
+BlockManager: Initialized 
+BlockManager: 
+BlockManagerId(driver, 
+877f5102cefa, 34929, None)
+26/03/18 03:56:37 INFO Standa
+loneAppClient$ClientEndpoint:
+ Executor updated: 
+app-20260318035637-0000/0 is 
+now RUNNING
+26/03/18 03:56:37 INFO 
+StandaloneSchedulerBackend: 
+SchedulerBackend is ready 
+for scheduling beginning 
+after reached 
+minRegisteredResourcesRatio: 
+0.0
+>>> Bß║»t ─æß║ºu lß║»ng nghe Spark Streaming tß╗½ Kafka topic 'realtime_transactions'...
+26/03/18 03:56:39 WARN 
+MetricsConfig: Cannot locate 
+configuration: tried hadoop-m
+etrics2-s3a-file-system.prope
+rties,hadoop-metrics2.propert
+ies
+26/03/18 03:56:40 WARN 
+ResolveWriteToStream: 
+spark.sql.adaptive.enabled 
+is not supported in 
+streaming 
+DataFrames/Datasets and will 
+be disabled.
+26/03/18 03:56:41 WARN 
+ResolveWriteToStream: 
+Temporary checkpoint 
+location created which is 
+deleted normally when the 
+query didn't fail: /tmp/tempo
+rary-bac38641-9a87-4ed8-bb72-
+aacc90665cb4. If it's 
+required to delete it under 
+any circumstances, please 
+set spark.sql.streaming.force
+DeleteTempCheckpointLocation 
+to true. Important to know 
+deleting temp checkpoint 
+folder is best effort.
+26/03/18 03:56:41 WARN 
+ResolveWriteToStream: 
+spark.sql.adaptive.enabled 
+is not supported in 
+streaming 
+DataFrames/Datasets and will 
+be disabled.
+26/03/18 03:56:42 WARN 
+AdminClientConfig: These 
+configurations 
+'[key.deserializer, 
+value.deserializer, 
+enable.auto.commit, 
+max.poll.records, 
+auto.offset.reset]' were 
+supplied but are not used 
+yet.
++--------+----------+------+--------+--------+---------+--------+-------------+
+|event_id|account_id|amount|txn_type|currency|timestamp|merchant|is_fraud_flag|
++--------+----------+------+--------+--------+---------+--------+-------------+
++--------+----------+------+--------+--------+---------+--------+-------------+
+
+26/03/18 03:56:49 WARN 
+AdminClientConfig: These 
+configurations 
+'[key.deserializer, 
+value.deserializer, 
+enable.auto.commit, 
+max.poll.records, 
+auto.offset.reset]' were 
+supplied but are not used 
+yet.
