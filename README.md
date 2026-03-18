@@ -1,95 +1,341 @@
-# Lakehouse Architecture Demo - Full Flow Guide
+# EDM-ETL: Enterprise Data Lakehouse Pipeline
 
-Welcome to the end-to-end Local Lakehouse Data Engineering Project! This repository simulates a real-world Big Data & Machine Learning Pipeline transitioning streaming/batch data into a Star Schema Data Warehouse and Serving Layers.
-
-## System Architecture
-
-The project is structured according to the **Medallion Architecture**, divided closely by responsibility:
-
-- `01_data_sources`: Where "Fake" bank and e-wallet events are injected.
-- `02_ingestion`: Kafka Event Streaming Bus.
-- `03_processing`: Apache Spark (Real-time stream) and Apache Airflow (Daily ETL Batch load).
-- `04_storage`: MinIO (Cold Data Lake S3) and PostgreSQL (Hot Data Warehouse).
-- `05_serving`: Metabase (BI Dashboard), Jupyter Notebook (ML Engine), FastAPI (Machine Learning Serving Endpoint).
+Du an mo phong mot **Enterprise Data Warehouse (EDW)** theo kien truc Medallion, tich hop luong du lieu thoi gian thuc (Kafka + Spark Streaming) va xu ly Batch (Apache Airflow) vao mot kho du lieu trung tam duy nhat (PostgreSQL).
 
 ---
 
-## Prerequisite
-- **Windows / Linux OS** with **Docker & Docker Compose** installed.
-- **Python 3.10+** (Installed locally on your host OS) to generate fake streaming events.
-- JDK 11+ and Apache Spark configured to run `spark-submit`.
+## Kien truc tong the
+
+```
+[Corebank / Ewallet OLTP]
+        |
+        v
+[01] Kafka Producer (generate_realtime_events.py)
+        |  topic: realtime_transactions
+        v
+[02] Kafka Broker (localhost:29092)
+        |
+        v
+[03] Spark Streaming (streaming_job.py)
+        |  -> public.realtime_transactions (Landing Zone)
+        v
+[03] Apache Airflow DAG: enterprise_edw_etl_pipeline
+        |  -> dw.dim_customer  (MDM Identity Resolution)
+        |  -> dw.dim_merchant
+        |  -> dw.dim_product_account
+        |  -> dw.fact_enterprise_transaction
+        v
+[05] Serving Layer
+        |  -> Metabase   (BI Dashboard)     :3000
+        |  -> Jupyter    (ML Notebook)      :8888
+        |  -> Streamlit  (Live Dashboard)   :8501
+        |  -> FastAPI    (ML API)           :8000
+```
 
 ---
 
-## How to run the Full Flow
+## Yeu cau cai dat (Prerequisites)
 
-### Step 1: Initialize The Platform Infrastructure
-To easily wake up the entire Data Platform, open your terminal (PowerShell) and run:
-```powershell
-.\start_realtime_demo.ps1
-```
-This script will sequentially boot up Kafka, PostgreSQL, MinIO, Metabase, Jupyter, and FastAPI.
+- Docker Desktop (da bat WSL2 tren Windows)
+- Python 3.10+ (cai tren may host, khong can trong Docker)
+- Thu vien Python: `kafka-python`, `faker`
 
-### Step 2: Stream Data to Storage (Lake & DW)
-You will now spin up an Apache Spark engine inside our worker container to consume Kafka events in real-time.
-Open a **new terminal window** and run:
 ```powershell
-docker exec lakehouse-spark-worker /opt/spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.6.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 /opt/spark/jobs/streaming_job.py
-```
-*(Spark will start connecting to S3 MinIO and wait for Kafka streams).*
-
-### Step 3: Start Generating Bank Events (Source)
-Open a **third terminal** inside the root directory and start the data spigot:
-```powershell
-cd 01_data_sources
-.\venv\Scripts\Activate.ps1
 pip install kafka-python faker
-python generate_realtime_events.py
 ```
-> The generator will start pushing JSON events representing payments, transfers, and high-risk bank withdrawals into the pipeline.
 
 ---
 
-## Step 4: Interact with The Serving Layer
+## CHAY LAN DAU (First-Time Setup)
 
-Now that data is flowing seamlessly from End to End, you can access the powerful services deployed:
+Luu y: Thuc hien dung thu tu tu Buoc 1 den Buoc 5. Khong bo qua buoc nao.
 
-### 1. BI Dashboard - Metabase (`http://localhost:3000`)
-- Use Metabase to create live visual analytics.
-- **Connect DB:** Type `PostgreSQL` | Host `host.docker.internal` | Port `5433` | Database `dw_edm` | User `edm_user` | Pass `edm_pass`.
-- View dynamic SQL charts updating as new Kafka transactions sink in.
+### Buoc 1: Khoi dong ha tang Kafka + Zookeeper
 
-### 2. Machine Learning Engine - Jupyter Notebook (`http://localhost:8888`)
-- The primary code-base for Data Scientists.
-- Password is: `admin`
-- Write Python code here to load the massive history volumes spanning S3 `s3a://data-lake/raw/transactions/`.
+```powershell
+cd 02_ingestion
+docker-compose up -d
+```
 
-### 3. AI Serving & Live Monitor - Streamlit App (`http://localhost:8501`)
-- Open **http://localhost:8501** in your web browser.
-- A beautiful, interactive **End-to-End Streamlit Dashboard** lets you:
-  - View the Real-time Database Sink updating live from Kafka/Spark.
-  - Test the FastAPI Fraud Detection Neural Network by filling out a payment form and evaluating the Real-time Risk Score Percentage computed by our Random Forest model.
+Kiem tra Kafka da san sang:
+```powershell
+docker logs lakehouse-kafka | Select-String "started"
+```
 
-### 4. Model Serving API - FastAPI (`http://localhost:8000`)
-- The backend Machine Learning API that powers the Streamlit inference.
-- Head to **http://localhost:8000/docs** to see the Swagger UI.
+### Buoc 2: Khoi dong Postgres + Spark + Airflow
 
-### 5. Run Batch Data Warehouse Pipelines (Airflow)
-- Access **http://localhost:8080** (admin/admin).
-- Turn on the `.dag` file called `lakehouse_daily_etl_standard`.
-- It executes a standard batch process mimicking a robust corporate data pipeline mapping raw Sources directly into the structured Data Warehouse Star Schema!
+```powershell
+cd 03_processing
+docker-compose up -d
+```
+
+Cho khoang 30 giay de Airflow khoi dong hoan toan, sau do kiem tra:
+```powershell
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+### Buoc 3: Khoi tao Database Schema (Chi chay MOT LAN duy nhat)
+
+**Buoc 3.1** - Tao cac bang Source (Corebank, Ewallet, Landing Zone):
+```powershell
+Get-Content "04_storage\init_db\01 ddl source tables.sql" | docker exec -i lakehouse-postgres psql -U edm_user -d dw_edm
+```
+
+**Buoc 3.2** - Tao cac bang E-wallet va Payment Source:
+```powershell
+Get-Content "04_storage\init_db\05 ddl ewallet payment source.sql" | docker exec -i lakehouse-postgres psql -U edm_user -d dw_edm
+```
+
+**Buoc 3.3** - Tao Schema Warehouse EDM (Dimension + Fact):
+```powershell
+$sql = @"
+CREATE SCHEMA IF NOT EXISTS dw;
+
+CREATE TABLE IF NOT EXISTS dw.dim_customer (
+    customer_sk     SERIAL PRIMARY KEY,
+    national_id     VARCHAR(20),
+    phone_number    VARCHAR(20),
+    full_name       VARCHAR(100),
+    is_wallet_user  BOOLEAN DEFAULT false,
+    is_borrower     BOOLEAN DEFAULT false,
+    kyc_level       VARCHAR(20),
+    bank_cif        VARCHAR(20),
+    wallet_user_id  VARCHAR(50),
+    CONSTRAINT uq_dim_customer_sk UNIQUE (customer_sk)
+);
+
+CREATE TABLE IF NOT EXISTS dw.dim_merchant (
+    merchant_sk         SERIAL PRIMARY KEY,
+    source_merchant_id  VARCHAR(50) UNIQUE,
+    merchant_name       VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS dw.dim_product_account (
+    product_sk          SERIAL PRIMARY KEY,
+    customer_sk         INT,
+    product_type        VARCHAR(50),
+    source_account_id   VARCHAR(50),
+    status              VARCHAR(20),
+    CONSTRAINT uq_product_sk UNIQUE (product_sk)
+);
+
+CREATE TABLE IF NOT EXISTS dw.fact_enterprise_transaction (
+    fact_id         SERIAL PRIMARY KEY,
+    customer_sk     INT  DEFAULT 1,
+    merchant_sk     INT  DEFAULT 1,
+    product_sk      INT  DEFAULT 1,
+    source_system   VARCHAR(20),
+    source_trans_id VARCHAR(50),
+    base_amount     NUMERIC(18,2),
+    currency_code   VARCHAR(10),
+    trans_timestamp TIMESTAMP,
+    status          VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS dw.mdm_deduplication_log (
+    log_id                  SERIAL PRIMARY KEY,
+    surviving_customer_sk   INT,
+    merged_source_id        VARCHAR(50),
+    confidence_score        NUMERIC(5,2),
+    created_at              TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS dw.dq_quarantine_log (
+    log_id          SERIAL PRIMARY KEY,
+    source_system   VARCHAR(20),
+    raw_payload     TEXT,
+    error_type      VARCHAR(50),
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE public.realtime_transactions
+    ADD COLUMN IF NOT EXISTS source_system  VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS event_id       VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS cif            VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS wallet_id      VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS merchant_name  VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS base_amount    NUMERIC(18,2),
+    ADD COLUMN IF NOT EXISTS currency       VARCHAR(10);
+"@
+echo $sql | docker exec -i lakehouse-postgres psql -U edm_user -d dw_edm
+```
+
+**Buoc 3.4** - Cau hinh ket noi Airflow toi Postgres (chay mot lan):
+```powershell
+docker exec airflow_scheduler airflow connections add postgres_lakehouse `
+  --conn-type postgres `
+  --conn-host lakehouse-postgres `
+  --conn-port 5432 `
+  --conn-schema dw_edm `
+  --conn-login edm_user `
+  --conn-password edm_pass
+```
+
+### Buoc 4: Nap du lieu mau (Corebank va Ewallet)
+
+```powershell
+$seed = @"
+INSERT INTO corebank.customer (cif, full_name, national_id, phone)
+SELECT
+    'CIF' || LPAD(gs::text, 6, '0'),
+    'Customer ' || gs,
+    '0' || LPAD(gs::text, 9, '0'),
+    '09' || LPAD(gs::text, 8, '0')
+FROM generate_series(1, 200) gs
+ON CONFLICT DO NOTHING;
+
+INSERT INTO ewallet.account (user_id, phone_number, full_name, national_id, kyc_level)
+SELECT
+    'W' || LPAD((gs + 500)::text, 6, '0'),
+    '08' || LPAD(gs::text, 8, '0'),
+    'Wallet User ' || gs,
+    '1' || LPAD(gs::text, 9, '0'),
+    CASE WHEN gs % 3 = 0 THEN 'ADVANCED' WHEN gs % 2 = 0 THEN 'STANDARD' ELSE 'BASIC' END
+FROM generate_series(1, 250) gs
+ON CONFLICT DO NOTHING;
+"@
+echo $seed | docker exec -i lakehouse-postgres psql -U edm_user -d dw_edm
+```
 
 ---
 
-## Troubleshooting
+## CHAY CAC LAN SAU (Daily Run)
 
-**Download failed java.lang.RuntimeException for Spark Packages**:
-- **Why it happens**: This occurs if the `spark-submit` command is forcefully terminated (e.g. by pressing `Ctrl + C`) while it is actively downloading jars from the Maven repository (the first ~20 seconds). The half-downloaded jars corrupt the Ivy cache.
-- **How to fix it**: Run the following command to clear the broken cache inside the Spark container before trying again:
-  ```powershell
-  docker exec lakehouse-spark-worker rm -rf /root/.ivy2
-  ```
-- **How to prevent it**: Resist the urge to press `Ctrl + C` during the download phase. You should only terminate the streaming process AFTER the text `Bắt đầu lắng nghe Spark Streaming từ Kafka topic...` appears on the console. At this point, the download is 100% complete and safe to exit anytime.
+### Buoc 1: Dam bao Docker dang chay
+
+```powershell
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+Neu container nao bi dung, khoi dong lai:
+```powershell
+cd 02_ingestion
+docker-compose up -d
+
+cd ../03_processing
+docker-compose up -d
+```
+
+### Buoc 2: Chay Kafka Producer (Terminal 1)
+
+Mo terminal rieng va chay:
+```powershell
+cd c:\Users\ADMIN\Desktop\edm-etl
+python 01_data_sources\generate_realtime_events.py
+```
+
+Producer se gui giao dich PAYMENT va EWALLET lien tuc vao Kafka moi 0.1-1 giay. Nhan Ctrl+C de dung.
+
+### Buoc 3: Chay Spark Streaming Job (Terminal 2)
+
+Mo terminal khac va chay:
+```powershell
+docker exec lakehouse-spark-worker /opt/spark/bin/spark-submit `
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.5.4 `
+  /opt/spark/jobs/streaming_job.py
+```
+
+Luu y: Cho den khi thay dong `>>> Spark Ingestion Engine Started. Listening to Kafka...` moi dung (Ctrl+C).
+Khong dung trong qua trinh tai JAR (20-30 giay dau) de tranh corrupt cache.
+
+### Buoc 4: Kich hoat Airflow DAG
+
+Cho it nhat 30 giay de Spark nap du du lieu vao Landing Zone.
+
+Cach 1 - Giao dien Web (khuyen dung):
+- Truy cap: http://localhost:8080
+- Tai khoan: admin / admin
+- Tim DAG `enterprise_edw_etl_pipeline` va nhan Trigger DAG
+
+Cach 2 - Dong lenh:
+```powershell
+docker exec airflow_scheduler airflow dags trigger enterprise_edw_etl_pipeline
+```
+
+### Buoc 5: Kiem tra ket qua
+
+```powershell
+# So giao dich trong Fact Table
+docker exec lakehouse-postgres psql -U edm_user -d dw_edm -c "SELECT count(*) FROM dw.fact_enterprise_transaction;"
+
+# So khach hang da duoc resolve (MDM)
+docker exec lakehouse-postgres psql -U edm_user -d dw_edm -c "SELECT count(*), is_wallet_user, is_borrower FROM dw.dim_customer GROUP BY 2,3;"
+
+# 10 giao dich moi nhat
+docker exec lakehouse-postgres psql -U edm_user -d dw_edm -c "SELECT source_system, base_amount, currency_code, trans_timestamp FROM dw.fact_enterprise_transaction ORDER BY trans_timestamp DESC LIMIT 10;"
+```
 
 ---
-*Happy Engineering!*
+
+## Cac dich vu Serving Layer (Tuy chon)
+
+```powershell
+cd 05_serving
+docker-compose up -d
+```
+
+| Dich vu              | URL                        | Dang nhap           |
+|----------------------|----------------------------|---------------------|
+| Airflow (ETL)        | http://localhost:8080       | admin / admin       |
+| Metabase (BI)        | http://localhost:3000       | Thiet lap lan dau   |
+| Jupyter Notebook     | http://localhost:8888       | Token: admin        |
+| Streamlit Dashboard  | http://localhost:8501       | Khong can           |
+| FastAPI (ML API)     | http://localhost:8000/docs  | Khong can           |
+| Spark Master UI      | http://localhost:8089       | Khong can           |
+
+Ket noi Metabase toi Postgres:
+- Type: PostgreSQL
+- Host: host.docker.internal
+- Port: 5432
+- Database: dw_edm
+- User: edm_user / Pass: edm_pass
+
+---
+
+## Xu ly su co thuong gap
+
+### Loi: The '<' operator is reserved for future use (PowerShell)
+
+PowerShell khong ho tro chuyen huong < nhu Linux. Thay the bang:
+```powershell
+# Sai
+docker exec -i lakehouse-postgres psql ... < file.sql
+
+# Dung
+Get-Content "file.sql" | docker exec -i lakehouse-postgres psql -U edm_user -d dw_edm
+```
+
+### Loi: relation "identities" does not exist (Airflow)
+
+Task load_dim_customer bi do vi lenh SQL bi tach roi. Fix da duoc ap dung vao DAG.
+Khoi WITH ... AS phai nam ngay truoc lenh INSERT INTO tuong ung, khong co cau lenh SQL nao xen giua.
+
+### Loi: duplicate key value violates unique constraint (Airflow)
+
+Cac bang Dimension co ban ghi Unknown (SK=1) va chuoi SERIAL phai bat dau tu 2.
+Fix da duoc ap dung: RESTART IDENTITY + setval() trong moi Task Dimension.
+
+### Loi: Spark khong tim thay file streaming_job.py
+
+Code duoc mount vao Spark Worker (khong phai Master):
+```powershell
+docker exec lakehouse-spark-worker /opt/spark/bin/spark-submit ...
+```
+
+### Loi: Corrupt Ivy Cache (Spark JAR download bi gian doan)
+
+```powershell
+docker exec lakehouse-spark-worker rm -rf /root/.ivy2
+```
+
+### Loi: lakehouse-postgres container khong chay
+
+Postgres nam trong stack 04_storage:
+```powershell
+cd 04_storage
+docker-compose up -d
+```
+
+---
+
+Happy Engineering!
